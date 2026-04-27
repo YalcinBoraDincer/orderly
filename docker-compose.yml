@@ -1,0 +1,54 @@
+
+
+services:
+
+  orderly-db:
+    image: postgres:14-alpine
+    container_name: orderly-db
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: orderly123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - orderly-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  orderly-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orderly-app
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://orderly-db:5432/postgres
+      DB_USERNAME: postgres
+      DB_PASSWORD: orderly123
+      DB_SCHEMA: orderly
+      DDL_AUTO: update
+      JWT_SECRET: 0rd3rly$3cur3K3y!2026#R3st0r4ntApp
+      JWT_EXPIRATION: 86400000
+      JWT_REFRESH_EXPIRATION: 604800000
+    depends_on:
+      orderly-db:
+        condition: service_healthy
+    networks:
+      - orderly-network
+    restart: on-failure
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  orderly-network:
+    driver: bridge
