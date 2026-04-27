@@ -52,6 +52,7 @@ public class SecurityConfig {
 
                         // Herkese açık
                         .requestMatchers(AUTH_ENDPOINTS).permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, MENU_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.GET, CATEGORY_ENDPOINTS).permitAll()
                         .requestMatchers(SWAGGER_UI, SWAGGER_HTML, API_DOCS).permitAll()

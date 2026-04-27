@@ -10,6 +10,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+
 
 @Tag(name = "Menü Yönetimi", description = "Menü öğelerini yönetmek için API")
 public interface IMenuItemController {
@@ -45,4 +48,17 @@ public interface IMenuItemController {
             description = "Stokta yoksa veya geçici kaldırılacaksa kullanılır")
     @ApiResponse(responseCode = "200", description = "Müsaitlik güncellendi")
     ResponseEntity<MenuItemResponse> toggleAvailability(@PathVariable Long id);
+
+    @Operation(summary = "Menü öğesine resim yükle")
+    @ApiResponse(responseCode = "200", description = "Resim yüklendi")
+    ResponseEntity<MenuItemResponse> uploadImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException;
+
+
+
+
+
 }
+

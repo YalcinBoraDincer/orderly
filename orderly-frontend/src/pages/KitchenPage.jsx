@@ -3,20 +3,20 @@ import Navbar from '../components/Navbar';
 import api from '../api/axios';
 
 const ORDER_STATUS = {
-  PENDING:     { label: 'Bekliyor',    color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+  PENDING:     { label: 'Bekliyor',     color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
   IN_PROGRESS: { label: 'Hazırlanıyor', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-  READY:       { label: 'Hazır',       color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+  READY:       { label: 'Hazır',        color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
 };
 
 const ITEM_STATUS = {
-  WAITING:   { label: 'Bekliyor',    color: '#8b8b9e' },
-  PREPARING: { label: 'Hazırlanıyor', color: '#3b82f6' },
-  READY:     { label: '✅ Hazır',     color: '#10b981' },
+  WAITING:   { label: 'Bekliyor',      color: '#8b8b9e' },
+  PREPARING: { label: 'Hazırlanıyor',  color: '#3b82f6' },
+  READY:     { label: '✅ Hazır',      color: '#10b981' },
   SERVED:    { label: 'Servis edildi', color: '#8b8b9e' },
 };
 
 export default function KitchenPage() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
@@ -30,7 +30,6 @@ export default function KitchenPage() {
     }
   };
 
-  // Her 10 saniyede otomatik yenile (mutfak gerçek zamanlı olmalı)
   useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 10000);
@@ -40,7 +39,7 @@ export default function KitchenPage() {
   const handleStartOrder = async (orderId) => {
     try {
       await api.patch(`/api/kitchen/orders/${orderId}/start`);
-      fetchOrders(); // Listeyi güncelle
+      fetchOrders();
     } catch (e) {
       alert('Sipariş başlatılamadı!');
     }
@@ -55,9 +54,10 @@ export default function KitchenPage() {
     }
   };
 
-  const pendingOrders = orders.filter(o => o.status === 'PENDING');
-  const inProgressOrders = orders.filter(o => o.status === 'IN_PROGRESS');
-  const readyOrders = orders.filter(o => o.status === 'READY');
+  // orderStatus kullanıyoruz (API'den böyle geliyor)
+  const pendingOrders    = orders.filter(o => o.orderStatus === 'PENDING');
+  const inProgressOrders = orders.filter(o => o.orderStatus === 'IN_PROGRESS');
+  const readyOrders      = orders.filter(o => o.orderStatus === 'READY');
 
   return (
     <div style={styles.page}>
@@ -82,48 +82,48 @@ export default function KitchenPage() {
         ) : (
           <div style={styles.columns}>
 
-            {/* BEKLEYEN SİPARİŞLER */}
+            {/* BEKLEYEN */}
             <div style={styles.column}>
               <div style={styles.columnHeader}>
-                <span style={styles.columnDot('#f59e0b')} />
+                <span style={styles.dot('#f59e0b')} />
                 <h3 style={styles.columnTitle}>Bekliyor</h3>
                 <span style={styles.columnCount}>{pendingOrders.length}</span>
               </div>
               {pendingOrders.map(order => (
                 <OrderCard
-                  key={order.id}
+                  key={order.orderId}
                   order={order}
-                  onStart={() => handleStartOrder(order.id)}
+                  onStart={() => handleStartOrder(order.orderId)}
                   onItemReady={handleItemReady}
                 />
               ))}
             </div>
 
-            {/* HAZIRLANIYORLAR */}
+            {/* HAZIRLANIYOR */}
             <div style={styles.column}>
               <div style={styles.columnHeader}>
-                <span style={styles.columnDot('#3b82f6')} />
+                <span style={styles.dot('#3b82f6')} />
                 <h3 style={styles.columnTitle}>Hazırlanıyor</h3>
                 <span style={styles.columnCount}>{inProgressOrders.length}</span>
               </div>
               {inProgressOrders.map(order => (
                 <OrderCard
-                  key={order.id}
+                  key={order.orderId}
                   order={order}
                   onItemReady={handleItemReady}
                 />
               ))}
             </div>
 
-            {/* HAZIR OLANLAR */}
+            {/* HAZIR */}
             <div style={styles.column}>
               <div style={styles.columnHeader}>
-                <span style={styles.columnDot('#10b981')} />
+                <span style={styles.dot('#10b981')} />
                 <h3 style={styles.columnTitle}>Hazır</h3>
                 <span style={styles.columnCount}>{readyOrders.length}</span>
               </div>
               {readyOrders.map(order => (
-                <OrderCard key={order.id} order={order} />
+                <OrderCard key={order.orderId} order={order} />
               ))}
             </div>
 
@@ -134,14 +134,14 @@ export default function KitchenPage() {
   );
 }
 
-// Sipariş Kartı Bileşeni
 function OrderCard({ order, onStart, onItemReady }) {
-  const status = ORDER_STATUS[order.status] || ORDER_STATUS.PENDING;
+  // orderStatus kullanıyoruz
+  const status  = ORDER_STATUS[order.orderStatus] || ORDER_STATUS.PENDING;
   const elapsed = getElapsedTime(order.createdAt);
 
   return (
     <div style={styles.orderCard}>
-      {/* Kart Başlığı */}
+      {/* Başlık */}
       <div style={{ ...styles.orderHeader, backgroundColor: status.bg }}>
         <div>
           <span style={styles.tableLabel}>Masa {order.tableNumber}</span>
@@ -150,7 +150,7 @@ function OrderCard({ order, onStart, onItemReady }) {
           </span>
         </div>
         <div style={styles.orderMeta}>
-          <span style={styles.orderId}>#{order.id}</span>
+          <span style={styles.orderId}>#{order.orderId}</span>
           <span style={styles.elapsed}>⏱ {elapsed}</span>
         </div>
       </div>
@@ -159,7 +159,7 @@ function OrderCard({ order, onStart, onItemReady }) {
       <div style={styles.items}>
         {order.items?.map(item => {
           const itemStatus = ITEM_STATUS[item.itemStatus] || ITEM_STATUS.WAITING;
-          const isReady = item.itemStatus === 'READY' || item.itemStatus === 'SERVED';
+          const isReady    = item.itemStatus === 'READY' || item.itemStatus === 'SERVED';
 
           return (
             <div key={item.id} style={styles.item}>
@@ -173,21 +173,15 @@ function OrderCard({ order, onStart, onItemReady }) {
                   }}>
                     {item.menuItemName}
                   </p>
-                  {item.notes && (
-                    <p style={styles.itemNotes}>📝 {item.notes}</p>
-                  )}
+                  {item.notes && <p style={styles.itemNotes}>📝 {item.notes}</p>}
                 </div>
               </div>
               <div style={styles.itemRight}>
                 <span style={{ color: itemStatus.color, fontSize: '12px', fontWeight: '600' }}>
                   {itemStatus.label}
                 </span>
-                {/* Hazır değilse ve IN_PROGRESS ise butonu göster */}
                 {item.itemStatus === 'PREPARING' && onItemReady && (
-                  <button
-                    onClick={() => onItemReady(item.id)}
-                    style={styles.readyBtn}
-                  >
+                  <button onClick={() => onItemReady(item.id)} style={styles.readyBtn}>
                     Hazır
                   </button>
                 )}
@@ -199,13 +193,11 @@ function OrderCard({ order, onStart, onItemReady }) {
 
       {/* Sipariş Notu */}
       {order.notes && (
-        <div style={styles.orderNotes}>
-          📋 {order.notes}
-        </div>
+        <div style={styles.orderNotes}>📋 {order.notes}</div>
       )}
 
-      {/* Başlat Butonu */}
-      {order.status === 'PENDING' && onStart && (
+      {/* Başlat Butonu — orderStatus kullanıyoruz */}
+      {order.orderStatus === 'PENDING' && onStart && (
         <button onClick={onStart} style={styles.startBtn}>
           🚀 Hazırlamaya Başla
         </button>
@@ -217,40 +209,34 @@ function OrderCard({ order, onStart, onItemReady }) {
 function getElapsedTime(createdAt) {
   if (!createdAt) return '-';
   const diff = Math.floor((Date.now() - new Date(createdAt)) / 60000);
-  if (diff < 1) return 'Az önce';
+  if (diff < 1)  return 'Az önce';
   if (diff < 60) return `${diff} dk`;
   return `${Math.floor(diff / 60)} sa ${diff % 60} dk`;
 }
 
-function columnDot(color) {
-  return { width: '10px', height: '10px', borderRadius: '50%', backgroundColor: color, display: 'inline-block' };
-}
-
 const styles = {
-  page: { minHeight: '100vh', backgroundColor: '#0a0a0f' },
+  page:    { minHeight: '100vh', backgroundColor: '#0a0a0f' },
   content: { maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' },
-  header: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px',
-  },
-  title: { fontSize: '24px', fontWeight: '700', color: '#f1f1f1' },
+  header:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' },
+  title:   { fontSize: '24px', fontWeight: '700', color: '#f1f1f1' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '12px' },
   autoRefresh: { fontSize: '12px', color: '#8b8b9e' },
-  refreshBtn: {
-    padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)', color: '#8b8b9e', fontSize: '13px',
+  refreshBtn:  {
+    padding: '8px 16px', borderRadius: '8px',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    color: '#8b8b9e', fontSize: '13px',
   },
   columns: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', alignItems: 'start' },
-  column: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  columnHeader: {
-    display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px', padding: '4px 0',
-  },
-  columnTitle: { fontSize: '15px', fontWeight: '700', color: '#f1f1f1', flex: 1 },
-  columnCount: {
+  column:  { display: 'flex', flexDirection: 'column', gap: '16px' },
+  columnHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' },
+  columnTitle:  { fontSize: '15px', fontWeight: '700', color: '#f1f1f1', flex: 1 },
+  columnCount:  {
     backgroundColor: 'rgba(255,255,255,0.08)', color: '#8b8b9e',
     padding: '2px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
   },
-  columnDot: (color) => ({
-    width: '10px', height: '10px', borderRadius: '50%', backgroundColor: color,
+  dot: (color) => ({
+    width: '10px', height: '10px', borderRadius: '50%', backgroundColor: color, display: 'inline-block',
   }),
   orderCard: {
     backgroundColor: 'rgba(255,255,255,0.04)',
@@ -258,46 +244,48 @@ const styles = {
     borderRadius: '16px', overflow: 'hidden',
   },
   orderHeader: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '12px 16px',
+    display: 'flex', justifyContent: 'space-between',
+    alignItems: 'center', padding: '12px 16px',
   },
-  tableLabel: { fontSize: '16px', fontWeight: '700', color: '#f1f1f1', display: 'block' },
+  tableLabel:  { fontSize: '16px', fontWeight: '700', color: '#f1f1f1', display: 'block' },
   statusLabel: { fontSize: '12px', fontWeight: '600', marginTop: '2px', display: 'block' },
-  orderMeta: { textAlign: 'right' },
-  orderId: { fontSize: '13px', color: '#8b8b9e', display: 'block' },
-  elapsed: { fontSize: '12px', color: '#f59e0b', fontWeight: '600', display: 'block', marginTop: '2px' },
+  orderMeta:   { textAlign: 'right' },
+  orderId:     { fontSize: '13px', color: '#8b8b9e', display: 'block' },
+  elapsed:     { fontSize: '12px', color: '#f59e0b', fontWeight: '600', display: 'block', marginTop: '2px' },
   items: { padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' },
-  item: {
+  item:  {
     display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
     padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
   },
-  itemLeft: { display: 'flex', gap: '10px', alignItems: 'flex-start' },
-  itemQty: {
+  itemLeft:  { display: 'flex', gap: '10px', alignItems: 'flex-start' },
+  itemQty:   {
     backgroundColor: 'rgba(245,158,11,0.15)', color: '#f59e0b',
     padding: '2px 8px', borderRadius: '6px', fontSize: '13px', fontWeight: '700',
     minWidth: '28px', textAlign: 'center',
   },
-  itemName: { fontSize: '14px', color: '#f1f1f1', fontWeight: '500' },
+  itemName:  { fontSize: '14px', color: '#f1f1f1', fontWeight: '500' },
   itemNotes: { fontSize: '12px', color: '#8b8b9e', marginTop: '2px' },
   itemRight: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' },
-  readyBtn: {
+  readyBtn:  {
     padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '600',
     backgroundColor: 'rgba(16,185,129,0.15)', color: '#10b981',
     border: '1px solid rgba(16,185,129,0.3)',
   },
   orderNotes: {
-    margin: '0 16px 12px', padding: '8px 12px', backgroundColor: 'rgba(245,158,11,0.08)',
-    border: '1px solid rgba(245,158,11,0.15)', borderRadius: '8px',
-    fontSize: '13px', color: '#f59e0b',
+    margin: '0 16px 12px', padding: '8px 12px',
+    backgroundColor: 'rgba(245,158,11,0.08)',
+    border: '1px solid rgba(245,158,11,0.15)',
+    borderRadius: '8px', fontSize: '13px', color: '#f59e0b',
   },
   startBtn: {
-    width: '100%', padding: '12px', backgroundColor: 'rgba(59,130,246,0.15)',
-    borderTop: '1px solid rgba(59,130,246,0.2)', color: '#3b82f6',
-    fontSize: '14px', fontWeight: '700', letterSpacing: '0.3px',
+    width: '100%', padding: '12px',
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    borderTop: '1px solid rgba(59,130,246,0.2)',
+    color: '#3b82f6', fontSize: '14px', fontWeight: '700',
   },
   loadingText: { textAlign: 'center', color: '#8b8b9e', marginTop: '60px' },
-  emptyState: { textAlign: 'center', marginTop: '80px' },
-  emptyIcon: { fontSize: '48px', display: 'block', marginBottom: '16px' },
-  emptyText: { color: '#8b8b9e', fontSize: '18px' },
+  emptyState:  { textAlign: 'center', marginTop: '80px' },
+  emptyIcon:   { fontSize: '48px', display: 'block', marginBottom: '16px' },
+  emptyText:   { color: '#8b8b9e', fontSize: '18px' },
 };

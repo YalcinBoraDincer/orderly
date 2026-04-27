@@ -9,9 +9,15 @@ import com.bora.orderly.repository.CategoryRepository;
 import com.bora.orderly.repository.MenuItemRepository;
 import com.bora.orderly.service.IMenuItemService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import org.springframework.util.StringUtils;
+import java.nio.file.*;
+
 
 
 @Service
@@ -20,6 +26,9 @@ public class MenuItemServiceImpl implements IMenuItemService {
 
     private final CategoryRepository categoryRepository;
     private final MenuItemRepository menuItemRepository;
+
+    @Value("${app.upload-dir}")
+    private String uploadDir;
 
 
     @Override
@@ -87,6 +96,8 @@ public class MenuItemServiceImpl implements IMenuItemService {
         return toResponse(menuItemRepository.save(menuItem));
     }
 
+
+
     private MenuItemResponse toResponse(MenuItem menuItem) {
         return MenuItemResponse.builder()
                 .id(menuItem.getId())
@@ -100,4 +111,26 @@ public class MenuItemServiceImpl implements IMenuItemService {
                 .available(menuItem.getAvailable())
                 .build();
     }
+    @Override
+    public MenuItemResponse uploadImage(Long id, MultipartFile file) throws IOException {
+        MenuItem item = menuItemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Menü öğesi", id));
+        // Klasörü oluştur (yoksa)
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        // Benzersiz dosya adı
+        String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        String fileName  = "menu-" + id + "-" + System.currentTimeMillis() + "." + extension;
+        Path   filePath  = uploadPath.resolve(fileName);
+        // Kaydet
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        // URL'i DB'ye yaz
+        String imageUrl = "/uploads/images/" + fileName;
+        item.setImageUrl(imageUrl);
+        menuItemRepository.save(item);
+        return toResponse(item);  // toResponse — bizim metodumuzun adı bu
+    }
+
 }

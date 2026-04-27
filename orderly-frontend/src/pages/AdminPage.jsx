@@ -17,7 +17,6 @@ export default function AdminPage() {
       <div style={styles.content}>
         <h2 style={styles.title}>⚙️ Yönetim Paneli</h2>
 
-        {/* Sekmeler */}
         <div style={styles.tabs}>
           {tabs.map(tab => (
             <button
@@ -30,7 +29,6 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* İçerik */}
         {activeTab === 'categories' && <CategoriesTab />}
         {activeTab === 'menu'       && <MenuTab />}
         {activeTab === 'tables'     && <TablesTab />}
@@ -39,12 +37,12 @@ export default function AdminPage() {
   );
 }
 
-// ─── KATEGORİLER ────────────────────────────────────────────────
+// ─── KATEGORİLER ─────────────────────────────────────────────────
 function CategoriesTab() {
   const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState({ name: '', description: '', displayOrder: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [form, setForm]             = useState({ name: '', description: '', displayOrder: '' });
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
 
   const fetchCategories = async () => {
     const res = await api.get('/api/categories');
@@ -80,7 +78,6 @@ function CategoriesTab() {
 
   return (
     <div style={styles.tabContent}>
-      {/* Form */}
       <div style={styles.formCard}>
         <h3 style={styles.formTitle}>Yeni Kategori</h3>
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -97,7 +94,6 @@ function CategoriesTab() {
         </form>
       </div>
 
-      {/* Liste */}
       <div style={styles.list}>
         {categories.map(cat => (
           <div key={cat.id} style={styles.listItem}>
@@ -118,15 +114,15 @@ function CategoriesTab() {
   );
 }
 
-// ─── MENÜ ÖĞELERİ ───────────────────────────────────────────────
+// ─── MENÜ ÖĞELERİ ─────────────────────────────────────────────────
 function MenuTab() {
-  const [items, setItems] = useState([]);
+  const [items, setItems]         = useState([]);
   const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState({
+  const [form, setForm]           = useState({
     categoryId: '', name: '', description: '', price: '', preparationTimeMinutes: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
 
   const fetchAll = async () => {
     const [menuRes, catRes] = await Promise.all([
@@ -164,9 +160,22 @@ function MenuTab() {
     fetchAll();
   };
 
+  const handleImageUpload = async (id, file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      await api.post(`/api/menu/${id}/image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      fetchAll();
+    } catch (e) {
+      alert('Resim yüklenemedi!');
+    }
+  };
+
   return (
     <div style={styles.tabContent}>
-      {/* Form */}
       <div style={styles.formCard}>
         <h3 style={styles.formTitle}>Yeni Menü Öğesi</h3>
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -181,8 +190,8 @@ function MenuTab() {
             value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
           <input style={styles.input} placeholder="Fiyat (₺) *" type="number" step="0.01"
             value={form.price} onChange={e => setForm({...form, price: e.target.value})} required />
-          <input style={styles.input} placeholder="Hazırlık süresi (dakika)"
-            type="number" value={form.preparationTimeMinutes}
+          <input style={styles.input} placeholder="Hazırlık süresi (dakika)" type="number"
+            value={form.preparationTimeMinutes}
             onChange={e => setForm({...form, preparationTimeMinutes: e.target.value})} />
           {error && <p style={styles.error}>⚠️ {error}</p>}
           <button type="submit" disabled={loading} style={styles.submitBtn}>
@@ -191,19 +200,44 @@ function MenuTab() {
         </form>
       </div>
 
-      {/* Liste */}
       <div style={styles.list}>
         {items.map(item => (
           <div key={item.id} style={styles.listItem}>
-            <div>
+            {/* Resim önizlemesi */}
+            <div style={styles.itemImageBox}>
+              {item.imageUrl ? (
+                <img
+                  src={`http://localhost:8080${item.imageUrl}`}
+                  alt={item.name}
+                  style={styles.itemImage}
+                />
+              ) : (
+                <span style={styles.itemImagePlaceholder}>🍴</span>
+              )}
+            </div>
+
+            <div style={{ flex: 1 }}>
               <p style={styles.listName}>{item.name}</p>
               <p style={styles.listSub}>{item.categoryName} • ₺{Number(item.price).toFixed(2)}</p>
             </div>
+
             <div style={styles.listActions}>
+              {/* Aktif/Pasif toggle */}
               <button onClick={() => handleToggle(item.id)}
                 style={item.available ? styles.activeBadge : styles.inactiveBadge}>
                 {item.available ? 'Aktif' : 'Pasif'}
               </button>
+
+              {/* Resim Upload */}
+              <label style={styles.uploadBtn}>
+                🖼️ Resim
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleImageUpload(item.id, e.target.files[0])}
+                />
+              </label>
             </div>
           </div>
         ))}
@@ -212,12 +246,12 @@ function MenuTab() {
   );
 }
 
-// ─── MASALAR ────────────────────────────────────────────────────
+// ─── MASALAR ───────────────────────────────────────────────────────
 function TablesTab() {
-  const [tables, setTables] = useState([]);
-  const [form, setForm] = useState({ tableNumber: '', capacity: '', location: 'INDOOR' });
+  const [tables, setTables]   = useState([]);
+  const [form, setForm]       = useState({ tableNumber: '', capacity: '', location: 'INDOOR' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]     = useState('');
 
   const fetchTables = async () => {
     const res = await api.get('/api/tables');
@@ -242,8 +276,8 @@ function TablesTab() {
     try {
       const res = await api.get(`/api/tables/${id}/qr`, { responseType: 'blob' });
       const url = URL.createObjectURL(res.data);
-      const a = document.createElement('a');
-      a.href = url;
+      const a   = document.createElement('a');
+      a.href     = url;
       a.download = `masa-${tableNumber}-qr.png`;
       a.click();
       URL.revokeObjectURL(url);
@@ -286,10 +320,10 @@ function TablesTab() {
             <div style={styles.listActions}>
               <span style={
                 table.status === 'AVAILABLE' ? styles.activeBadge :
-                table.status === 'OCCUPIED' ? styles.occupiedBadge : styles.inactiveBadge
+                table.status === 'OCCUPIED'  ? styles.occupiedBadge : styles.inactiveBadge
               }>
                 {table.status === 'AVAILABLE' ? 'Boş' :
-                 table.status === 'OCCUPIED' ? 'Dolu' : 'Rezerve'}
+                 table.status === 'OCCUPIED'  ? 'Dolu' : 'Rezerve'}
               </span>
               <button onClick={() => downloadQr(table.id, table.tableNumber)} style={styles.qrBtn}>
                 📷 QR İndir
@@ -301,52 +335,73 @@ function TablesTab() {
     </div>
   );
 }
+
+// ─── STİLLER ───────────────────────────────────────────────────────
 const styles = {
-  page: { minHeight: '100vh', backgroundColor: '#0a0a0f' },
+  page:    { minHeight: '100vh', backgroundColor: '#0a0a0f' },
   content: { maxWidth: '900px', margin: '0 auto', padding: '32px 24px' },
-  title: { fontSize: '24px', fontWeight: '700', color: '#f1f1f1', marginBottom: '24px' },
+  title:   { fontSize: '24px', fontWeight: '700', color: '#f1f1f1', marginBottom: '24px' },
 
   tabs: { display: 'flex', gap: '8px', marginBottom: '32px' },
   tab: {
-    padding: '10px 20px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.08)', color: '#8b8b9e', fontSize: '14px', fontWeight: '500',
+    padding: '10px 20px', borderRadius: '10px',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    color: '#8b8b9e', fontSize: '14px', fontWeight: '500',
   },
   tabActive: {
     padding: '10px 20px', borderRadius: '10px',
     background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(239,68,68,0.2))',
-    border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontSize: '14px', fontWeight: '700',
+    border: '1px solid rgba(245,158,11,0.3)',
+    color: '#f59e0b', fontSize: '14px', fontWeight: '700',
   },
 
   tabContent: { display: 'flex', flexDirection: 'column', gap: '24px' },
   formCard: {
-    backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '16px', padding: '24px',
   },
   formTitle: { fontSize: '16px', fontWeight: '700', color: '#f1f1f1', marginBottom: '16px' },
-  form: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  form:      { display: 'flex', flexDirection: 'column', gap: '12px' },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '10px', padding: '12px 14px', color: '#f1f1f1', fontSize: '14px',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '10px', padding: '12px 14px',
+    color: '#f1f1f1', fontSize: '14px',
     outline: 'none', fontFamily: 'Inter, sans-serif',
   },
   error: {
-    color: '#ef4444', fontSize: '13px', backgroundColor: 'rgba(239,68,68,0.1)',
-    border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', padding: '8px 12px',
+    color: '#ef4444', fontSize: '13px',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    border: '1px solid rgba(239,68,68,0.2)',
+    borderRadius: '8px', padding: '8px 12px',
   },
   submitBtn: {
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white',
-    fontWeight: '700', fontSize: '14px', padding: '13px', borderRadius: '10px',
+    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+    color: 'white', fontWeight: '700', fontSize: '14px',
+    padding: '13px', borderRadius: '10px',
   },
 
-  list: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  list:     { display: 'flex', flexDirection: 'column', gap: '8px' },
   listItem: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '12px', padding: '14px 18px',
+    display: 'flex', alignItems: 'center', gap: '12px',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '12px', padding: '12px 16px',
   },
-  listName: { fontSize: '15px', fontWeight: '600', color: '#f1f1f1' },
-  listSub: { fontSize: '12px', color: '#8b8b9e', marginTop: '3px' },
-  listActions: { display: 'flex', alignItems: 'center', gap: '10px' },
+  listName:    { fontSize: '15px', fontWeight: '600', color: '#f1f1f1' },
+  listSub:     { fontSize: '12px', color: '#8b8b9e', marginTop: '3px' },
+  listActions: { display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' },
+
+  // Menü resim önizleme
+  itemImageBox: {
+    width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
+  itemImage:            { width: '100%', height: '100%', objectFit: 'cover' },
+  itemImagePlaceholder: { fontSize: '20px', opacity: 0.4 },
 
   activeBadge: {
     padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
@@ -368,10 +423,14 @@ const styles = {
     backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444',
     border: '1px solid rgba(239,68,68,0.2)',
   },
+  uploadBtn: {
+    padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
+    backgroundColor: 'rgba(139,92,246,0.1)', color: '#8b5cf6',
+    border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer',
+  },
   qrBtn: {
     padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
     backgroundColor: 'rgba(59,130,246,0.1)', color: '#3b82f6',
     border: '1px solid rgba(59,130,246,0.2)',
   },
 };
-
