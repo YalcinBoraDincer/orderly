@@ -7,6 +7,7 @@ import com.bora.orderly.entity.RestaurantTable;
 import com.bora.orderly.enums.TableStatus;
 import com.bora.orderly.exception.BusinessException;
 import com.bora.orderly.exception.ResourceNotFoundException;
+import com.bora.orderly.repository.OrderRepository;
 import com.bora.orderly.repository.TableRepository;
 import com.bora.orderly.service.IQrCodeService;
 import com.bora.orderly.service.ITableService;
@@ -22,6 +23,8 @@ public class TableServiceImpl implements ITableService {
 
     private final TableRepository tableRepository;
     private final IQrCodeService qrCodeService;
+    private final OrderRepository orderRepository;
+
 
 
     @Override
@@ -77,6 +80,26 @@ public class TableServiceImpl implements ITableService {
         tableRepository.save(table);
         return qrCode;
     }
+    @Override
+    public void deleteTable(Long id) {
+        RestaurantTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Masa", id));
+
+        if (table.getStatus() == TableStatus.OCCUPIED) {
+            throw new BusinessException("Üzerinde aktif sipariş olan masa silinemez!");
+        }
+
+        // Geçmiş siparişlerin table referansını temizle
+        orderRepository.findAllByTableId(id).forEach(order -> {
+            order.setTable(null);
+            orderRepository.save(order);
+        });
+
+        tableRepository.delete(table);
+    }
+
+
+
 
 
     private TableResponse toResponse(RestaurantTable restaurantTable) {
@@ -90,4 +113,5 @@ public class TableServiceImpl implements ITableService {
                 .build();
 
     }
+    
 }

@@ -29,6 +29,8 @@ services:
     container_name: orderly-app
     ports:
       - "8080:8080"
+    volumes:
+      - uploads_data:/app/uploads
     environment:
       DB_URL: jdbc:postgresql://orderly-db:5432/postgres
       DB_USERNAME: postgres
@@ -44,11 +46,26 @@ services:
     networks:
       - orderly-network
     restart: on-failure
+  orderly-frontend:
+    build:
+      context: ./orderly-frontend
+      dockerfile: Dockerfile
+    container_name: orderly-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - orderly-app
+    networks:
+      - orderly-network
+    restart: on-failure
 
 volumes:
   postgres_data:
+    driver: local
+  uploads_data:
     driver: local
 
 networks:
   orderly-network:
     driver: bridge
+

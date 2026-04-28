@@ -16,10 +16,12 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // React dev server + production adresleri
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",   // Vite dev server
-                "http://localhost:3000"    // İleride build alınca
-        ));
+       config.setAllowedOrigins(List.of(
+            "http://localhost:5173",   // Vite dev
+            "http://localhost:3000",
+            "http://localhost"         // ← Docker Nginx (80)
+));
+
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

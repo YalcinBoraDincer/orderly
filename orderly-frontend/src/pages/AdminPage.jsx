@@ -207,7 +207,7 @@ function MenuTab() {
             <div style={styles.itemImageBox}>
               {item.imageUrl ? (
                 <img
-                  src={`http://localhost:8080${item.imageUrl}`}
+                  src={item.imageUrl}
                   alt={item.name}
                   style={styles.itemImage}
                 />
@@ -285,6 +285,16 @@ function TablesTab() {
       alert('QR kod indirilemedi');
     }
   };
+  const handleDeleteTable = async (id) => {
+  if (!window.confirm('Masayı silmek istiyor musunuz?')) return;
+  try {
+    await api.delete(`/api/tables/${id}`);
+    fetchTables();
+  } catch (err) {
+    alert(err.response?.data?.message || 'Masa silinemedi!');
+  }
+};
+
 
   return (
     <div style={styles.tabContent}>
@@ -328,6 +338,10 @@ function TablesTab() {
               <button onClick={() => downloadQr(table.id, table.tableNumber)} style={styles.qrBtn}>
                 📷 QR İndir
               </button>
+              <button onClick={() => handleDeleteTable(table.id)} style={styles.deleteBtn}>
+                Sil
+              </button>
+
             </div>
           </div>
         ))}

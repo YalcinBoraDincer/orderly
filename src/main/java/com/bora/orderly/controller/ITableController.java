@@ -46,4 +46,9 @@ public interface ITableController {
             @ApiResponse(responseCode = "404", description = "Masa bulunamadı")
     })
     ResponseEntity<byte[]> getTableQrCode(@PathVariable Long id) throws Exception;
+
+    @Operation(summary = "Masa sil")
+    @ApiResponse(responseCode = "204", description = "Silindi")
+    ResponseEntity<Void> deleteTable(@PathVariable Long id);
+
 }

@@ -46,6 +46,7 @@ public class TableController implements ITableController {
         return ResponseEntity.ok(tableService.updateTableStatus(id, status));
     }
 
+
     @GetMapping("/{id}/qr")
     @Override
     public ResponseEntity<byte[]> getTableQrCode(@PathVariable Long id) throws Exception {
@@ -55,4 +56,13 @@ public class TableController implements ITableController {
                 .contentType(MediaType.IMAGE_PNG)
                 .body(qrCode);
     }
+
+    @Override
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTable(@PathVariable Long id) {
+        tableService.deleteTable(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }

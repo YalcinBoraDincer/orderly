@@ -85,7 +85,7 @@ export default function MenuPage() {
                 {/* Görsel alanı */}
                 <div style={styles.cardImage}>
                   {item.imageUrl ? (
-                    <img src={`http://localhost:8080${item.imageUrl}`} alt={item.name} style={styles.image} />
+                    <img src={item.imageUrl} alt={item.name} style={styles.image} />
                   ) : (
                     <div style={styles.imagePlaceholder}>
                       <span style={styles.placeholderIcon}>🍴</span>

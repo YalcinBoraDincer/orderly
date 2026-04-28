@@ -11,4 +11,6 @@ public interface ITableService {
     TableResponse createTable(TableRequest request);
     TableResponse updateTableStatus(Long id, TableStatus status);
     byte[] generateQrCode(Long id) throws Exception;
+    void deleteTable(Long id);
+
 }
