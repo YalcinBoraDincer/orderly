@@ -14,13 +14,14 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*"));
 
-        // React dev server + production adresleri
+        /* React dev server + production adresleri
        config.setAllowedOrigins(List.of(
             "http://localhost:5173",   // Vite dev
             "http://localhost:3000",
             "http://localhost"         // ← Docker Nginx (80)
-));
+));*/
 
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
