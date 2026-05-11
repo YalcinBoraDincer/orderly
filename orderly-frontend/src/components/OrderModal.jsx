@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
+import PaymentModal from './PaymentModal';
 
 export default function OrderModal({ table, onClose, onSuccess }) {
   const [menuItems, setMenuItems]     = useState([]);
@@ -10,6 +11,7 @@ export default function OrderModal({ table, onClose, onSuccess }) {
   const [loading, setLoading]         = useState(true);
   const [submitting, setSubmitting]   = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -110,11 +112,24 @@ export default function OrderModal({ table, onClose, onSuccess }) {
           <p style={styles.loadingText}>Yükleniyor...</p>
         ) : table.status === 'OCCUPIED' && activeOrder ? (
           // ── DOLU MASA: Aktif Sipariş ──────────────────────────
-          <ActiveOrderView
-            order={activeOrder}
-            onClose={handleCloseOrder}
-            submitting={submitting}
-          />
+          <>
+            <ActiveOrderView
+              order={activeOrder}
+              onOpenPayment={() => setShowPaymentModal(true)}
+              submitting={submitting}
+            />
+            {showPaymentModal && (
+              <PaymentModal 
+                order={activeOrder} 
+                onClose={() => setShowPaymentModal(false)} 
+                onSuccess={() => {
+                  setShowPaymentModal(false);
+                  onSuccess(); // Dashbaord'u yenile
+                  onClose();   // Ana modalı kapat (masa boşa çıkmış olabilir)
+                }} 
+              />
+            )}
+          </>
         ) : (
           // ── BOŞ MASA: Sipariş Oluştur ─────────────────────────
           <div style={styles.body}>
@@ -188,7 +203,7 @@ export default function OrderModal({ table, onClose, onSuccess }) {
 }
 
 // Aktif sipariş görünümü
-function ActiveOrderView({ order, onClose, submitting }) {
+function ActiveOrderView({ order, onOpenPayment, submitting }) {
   const STATUS_COLORS = {
     WAITING:   '#8b8b9e',
     PREPARING: '#3b82f6',
@@ -224,11 +239,11 @@ function ActiveOrderView({ order, onClose, submitting }) {
       {/* Toplam + Kapat */}
       <div style={styles.footer}>
         <div style={styles.cartSummary}>
-          <span style={styles.cartCount}>Toplam</span>
-          <span style={styles.cartTotal}>₺{Number(order.totalAmount).toFixed(2)}</span>
+          <span style={styles.cartCount}>Kalan Tutar</span>
+          <span style={styles.cartTotal}>₺{Number(order.remainingAmount || order.totalAmount).toFixed(2)}</span>
         </div>
-        <button onClick={onClose} disabled={submitting} style={styles.closeOrderBtn}>
-          {submitting ? 'Kapatılıyor...' : '💳 Hesabı Kapat'}
+        <button onClick={onOpenPayment} disabled={submitting} style={styles.closeOrderBtn}>
+          {submitting ? 'Bekleniyor...' : '💳 Ödeme Al'}
         </button>
       </div>
     </div>

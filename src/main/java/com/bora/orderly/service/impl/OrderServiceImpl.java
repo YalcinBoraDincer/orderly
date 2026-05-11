@@ -29,6 +29,7 @@ public class OrderServiceImpl implements IOrderService {
     private final UserRepository userRepository;
     private final TableRepository tableRepository;
     private final MenuItemRepository menuItemRepository;
+    private final PaymentRepository paymentRepository;
 
 
 
@@ -156,6 +157,19 @@ public class OrderServiceImpl implements IOrderService {
     //MapperMethods
     private OrderResponse toResponse(Order order) {
         List<OrderItemResponse> items = orderItemRepository.findByOrderId(order.getId()).stream().map(this::toItemResponse).toList();
+        
+        List<Payment> payments = paymentRepository.findByOrderId(order.getId());
+        BigDecimal paidAmount = payments.stream()
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal tipAmount = payments.stream()
+                .map(p -> p.getTipAmount() != null ? p.getTipAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal remainingAmount = order.getTotalAmount().subtract(paidAmount);
+        if (remainingAmount.compareTo(BigDecimal.ZERO) < 0) {
+            remainingAmount = BigDecimal.ZERO;
+        }
+
         return OrderResponse
                 .builder()
                 .id(order.getId())
@@ -164,6 +178,9 @@ public class OrderServiceImpl implements IOrderService {
                 .waiterName(order.getWaiter()!=null? order.getWaiter().getFullName():null)
                 .status(order.getStatus())
                 .totalAmount(order.getTotalAmount())
+                .paidAmount(paidAmount)
+                .remainingAmount(remainingAmount)
+                .tipAmount(tipAmount)
                 .notes(order.getNotes())
                 .items(items)
                 .createdAt(order.getCreatedAt())
