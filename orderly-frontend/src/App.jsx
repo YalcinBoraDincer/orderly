@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage';
 import MenuPage from './pages/MenuPage';
 import KitchenPage from './pages/KitchenPage';
 import AdminPage from './pages/AdminPage';
+import FeedbackPage from './pages/FeedbackPage';
 
 // Giriş yapmadan korumalı sayfaya erişilemesin
 function PrivateRoute({ children, roles }) {
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/menu" element={<MenuPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
 
           <Route path="/dashboard" element={
             <PrivateRoute><DashboardPage /></PrivateRoute>

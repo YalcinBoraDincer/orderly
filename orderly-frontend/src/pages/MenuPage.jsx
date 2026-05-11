@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 export default function MenuPage() {
@@ -6,6 +7,7 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // URL'den masa numarasını al (?table=A1)
   const tableNumber = new URLSearchParams(window.location.search).get('table');
@@ -115,11 +117,17 @@ export default function MenuPage() {
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer / Feedback Banner */}
       <div style={styles.footer}>
         <p style={styles.footerText}>
-          Sipariş için garsonumuzu çağırın 🤝
+          Yemeğinizi bitirdiniz mi? 🍽️
         </p>
+        <button 
+          onClick={() => navigate(`/feedback?table=${tableNumber || 'Bilinmiyor'}`)}
+          style={styles.feedbackBtn}
+        >
+          Bizi Değerlendirin!
+        </button>
       </div>
     </div>
   );
@@ -297,18 +305,17 @@ const styles = {
 
   // Footer
   footer: {
-    position: 'fixed',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(10,10,15,0.95)',
-    borderTop: '1px solid rgba(255,255,255,0.08)',
-    padding: '16px',
-    textAlign: 'center',
-    backdropFilter: 'blur(20px)',
+    position: 'fixed', bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(10,10,15,0.95)', borderTop: '1px solid rgba(255,255,255,0.08)',
+    padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    backdropFilter: 'blur(20px)', zIndex: 100
   },
   footerText: {
-    color: '#8b8b9e',
-    fontSize: '14px',
+    color: '#8b8b9e', fontSize: '14px', margin: 0, fontWeight: '500'
   },
+  feedbackBtn: {
+    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+    color: 'white', border: 'none', borderRadius: '8px', padding: '10px 16px',
+    fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.2s'
+  }
 };
