@@ -6,7 +6,7 @@ export default function OrderModal({ table, onClose, onSuccess }) {
   const [menuItems, setMenuItems]     = useState([]);
   const [categories, setCategories]   = useState([]);
   const [activeOrder, setActiveOrder] = useState(null);
-  const [cart, setCart]               = useState({}); // { menuItemId: quantity }
+  const [cart, setCart]               = useState({});
   const [notes, setNotes]             = useState('');
   const [loading, setLoading]         = useState(true);
   const [submitting, setSubmitting]   = useState(false);
@@ -24,7 +24,6 @@ export default function OrderModal({ table, onClose, onSuccess }) {
         setCategories(catRes.data);
         if (catRes.data.length > 0) setActiveCategory(catRes.data[0].id);
 
-        // Dolu masaysa aktif siparişi getir
         if (table.status === 'OCCUPIED') {
           const orderRes = await api.get(`/api/orders/table/${table.id}/active`);
           setActiveOrder(orderRes.data);
@@ -76,34 +75,18 @@ export default function OrderModal({ table, onClose, onSuccess }) {
     }
   };
 
-  const handleCloseOrder = async () => {
-    if (!window.confirm('Siparişi kapatmak istiyor musunuz?')) return;
-    setSubmitting(true);
-    try {
-      await api.patch(`/api/orders/${activeOrder.id}/status`, { status: 'CLOSED' });
-      onSuccess();
-      onClose();
-    } catch (e) {
-      alert('Sipariş kapatılamadı!');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const filteredItems = menuItems.filter(i => i.categoryId === activeCategory);
 
   return (
-    // Arka plan overlay
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
-
-        {/* Başlık */}
+        {/* Header */}
         <div style={styles.header}>
           <div>
-            <h2 style={styles.title}>Masa {table.tableNumber}</h2>
-            <span style={styles.capacity}>👥 {table.capacity} kişilik •
-              {table.location === 'INDOOR' ? ' 🏠 İç mekan' : ' 🌿 Dış mekan'}
-            </span>
+            <p style={styles.headerLabel}>MASA {table.tableNumber}</p>
+            <h2 style={styles.headerTitle}>
+              {table.status === 'OCCUPIED' && activeOrder ? `Sipariş #${activeOrder.id}` : 'Yeni Sipariş'}
+            </h2>
           </div>
           <button onClick={onClose} style={styles.closeBtn}>✕</button>
         </div>
@@ -111,7 +94,6 @@ export default function OrderModal({ table, onClose, onSuccess }) {
         {loading ? (
           <p style={styles.loadingText}>Yükleniyor...</p>
         ) : table.status === 'OCCUPIED' && activeOrder ? (
-          // ── DOLU MASA: Aktif Sipariş ──────────────────────────
           <>
             <ActiveOrderView
               order={activeOrder}
@@ -119,22 +101,21 @@ export default function OrderModal({ table, onClose, onSuccess }) {
               submitting={submitting}
             />
             {showPaymentModal && (
-              <PaymentModal 
-                order={activeOrder} 
-                onClose={() => setShowPaymentModal(false)} 
+              <PaymentModal
+                order={activeOrder}
+                onClose={() => setShowPaymentModal(false)}
                 onSuccess={() => {
                   setShowPaymentModal(false);
-                  onSuccess(); // Dashbaord'u yenile
-                  onClose();   // Ana modalı kapat (masa boşa çıkmış olabilir)
-                }} 
+                  onSuccess();
+                  onClose();
+                }}
               />
             )}
           </>
         ) : (
-          // ── BOŞ MASA: Sipariş Oluştur ─────────────────────────
           <div style={styles.body}>
-            {/* Kategori sekmeleri */}
-            <div style={styles.categoryBar}>
+            {/* Category tabs */}
+            <div style={styles.categoryBar} className="scrollbar-hide">
               {categories.map(cat => (
                 <button key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
@@ -145,7 +126,7 @@ export default function OrderModal({ table, onClose, onSuccess }) {
               ))}
             </div>
 
-            {/* Ürün Listesi */}
+            {/* Item list */}
             <div style={styles.itemList}>
               {filteredItems.length === 0 ? (
                 <p style={styles.emptyText}>Bu kategoride ürün yok</p>
@@ -153,7 +134,7 @@ export default function OrderModal({ table, onClose, onSuccess }) {
                 const qty = cart[item.id] || 0;
                 return (
                   <div key={item.id} style={styles.menuItem}>
-                    <div style={styles.menuItemInfo}>
+                    <div>
                       <p style={styles.menuItemName}>{item.name}</p>
                       <p style={styles.menuItemPrice}>₺{Number(item.price).toFixed(2)}</p>
                     </div>
@@ -171,17 +152,17 @@ export default function OrderModal({ table, onClose, onSuccess }) {
               })}
             </div>
 
-            {/* Sipariş Notu */}
+            {/* Notes */}
             <div style={styles.notesArea}>
               <input
                 style={styles.notesInput}
-                placeholder="📝 Sipariş notu (opsiyonel)"
+                placeholder="Sipariş notu (opsiyonel)"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
               />
             </div>
 
-            {/* Sepet özeti + Sipariş Ver */}
+            {/* Footer */}
             <div style={styles.footer}>
               <div style={styles.cartSummary}>
                 <span style={styles.cartCount}>{cartItemCount} ürün</span>
@@ -192,7 +173,7 @@ export default function OrderModal({ table, onClose, onSuccess }) {
                 disabled={cartItemCount === 0 || submitting}
                 style={cartItemCount === 0 ? { ...styles.orderBtn, opacity: 0.4 } : styles.orderBtn}
               >
-                {submitting ? 'Oluşturuluyor...' : '🍽️ Sipariş Ver'}
+                {submitting ? 'Oluşturuluyor...' : 'Sipariş Ver'}
               </button>
             </div>
           </div>
@@ -202,13 +183,12 @@ export default function OrderModal({ table, onClose, onSuccess }) {
   );
 }
 
-// Aktif sipariş görünümü
 function ActiveOrderView({ order, onOpenPayment, submitting }) {
   const STATUS_COLORS = {
-    WAITING:   '#8b8b9e',
-    PREPARING: '#3b82f6',
-    READY:     '#10b981',
-    SERVED:    '#8b8b9e',
+    WAITING:   '#d0c5af',
+    PREPARING: '#f2ca50',
+    READY:     '#d4af37',
+    SERVED:    '#99907c',
   };
 
   return (
@@ -218,16 +198,15 @@ function ActiveOrderView({ order, onOpenPayment, submitting }) {
         <span style={styles.orderStatus}>{order.status}</span>
       </div>
 
-      {/* Kalemler */}
       <div style={styles.itemList}>
         {order.items?.map(item => (
           <div key={item.id} style={styles.activeItem}>
-            <div>
-              <span style={styles.activeItemQty}>{item.quantity}x</span>
+            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+              <span style={styles.activeItemQty}>{item.quantity}</span>
               <span style={styles.activeItemName}>{item.menuItemName}</span>
             </div>
             <div style={styles.activeItemRight}>
-              <span style={{ color: STATUS_COLORS[item.itemStatus] || '#8b8b9e', fontSize: '12px', fontWeight: '600' }}>
+              <span style={{ color: STATUS_COLORS[item.itemStatus] || '#99907c', fontSize: '12px', fontWeight: '600', letterSpacing: '0.03em' }}>
                 {item.itemStatus}
               </span>
               <span style={styles.activeItemPrice}>₺{Number(item.subTotal).toFixed(2)}</span>
@@ -236,14 +215,13 @@ function ActiveOrderView({ order, onOpenPayment, submitting }) {
         ))}
       </div>
 
-      {/* Toplam + Kapat */}
       <div style={styles.footer}>
         <div style={styles.cartSummary}>
           <span style={styles.cartCount}>Kalan Tutar</span>
           <span style={styles.cartTotal}>₺{Number(order.remainingAmount || order.totalAmount).toFixed(2)}</span>
         </div>
-        <button onClick={onOpenPayment} disabled={submitting} style={styles.closeOrderBtn}>
-          {submitting ? 'Bekleniyor...' : '💳 Ödeme Al'}
+        <button onClick={onOpenPayment} disabled={submitting} style={styles.paymentBtn}>
+          {submitting ? 'Bekleniyor...' : 'Ödeme Al'}
         </button>
       </div>
     </div>
@@ -257,105 +235,114 @@ const styles = {
     justifyContent: 'center', zIndex: 1000, padding: '20px',
   },
   modal: {
-    backgroundColor: '#111118', border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '20px', width: '100%', maxWidth: '520px',
+    backgroundColor: '#1b1b1b', border: '1px solid rgba(212, 175, 55, 0.2)',
+    borderRadius: '8px', width: '100%', maxWidth: '520px',
     maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-    overflow: 'hidden',
+    overflow: 'hidden', boxShadow: '0 40px 60px -15px rgba(5, 8, 20, 0.5)',
   },
   header: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-    padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)',
+    padding: '24px', borderBottom: '1px solid rgba(212, 175, 55, 0.1)',
   },
-  title: { fontSize: '20px', fontWeight: '700', color: '#f1f1f1' },
-  capacity: { fontSize: '12px', color: '#8b8b9e', marginTop: '4px', display: 'block' },
+  headerLabel: {
+    fontFamily: "'Manrope', sans-serif", fontSize: '12px', fontWeight: '500',
+    letterSpacing: '0.1em', color: '#d0c5af', textTransform: 'uppercase', marginBottom: '4px',
+  },
+  headerTitle: {
+    fontFamily: "'Playfair Display', serif", fontSize: '24px', fontWeight: '600',
+    color: '#f2ca50', lineHeight: '1.3',
+  },
   closeBtn: {
-    backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-    color: '#8b8b9e', width: '32px', height: '32px', borderRadius: '8px', fontSize: '16px',
+    backgroundColor: 'transparent', border: '1px solid rgba(212, 175, 55, 0.2)',
+    color: '#d0c5af', width: '36px', height: '36px', borderRadius: '4px', fontSize: '16px',
   },
   body: { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' },
-  loadingText: { textAlign: 'center', color: '#8b8b9e', padding: '40px' },
-  emptyText: { textAlign: 'center', color: '#8b8b9e', padding: '30px' },
+  loadingText: { textAlign: 'center', color: '#d0c5af', padding: '40px' },
+  emptyText: { textAlign: 'center', color: '#d0c5af', padding: '30px' },
 
   categoryBar: {
-    display: 'flex', gap: '6px', padding: '16px 24px',
-    overflowX: 'auto', borderBottom: '1px solid rgba(255,255,255,0.06)',
-    scrollbarWidth: 'none',
+    display: 'flex', gap: '8px', padding: '16px 24px',
+    overflowX: 'auto', borderBottom: '1px solid rgba(212, 175, 55, 0.05)',
   },
   cat: {
-    padding: '6px 14px', borderRadius: '20px', whiteSpace: 'nowrap',
-    backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-    color: '#8b8b9e', fontSize: '13px', fontWeight: '500',
+    padding: '8px 16px', borderRadius: '9999px', whiteSpace: 'nowrap',
+    backgroundColor: '#20201f', border: '1px solid rgba(153, 144, 124, 0.2)',
+    color: '#d0c5af', fontFamily: "'Manrope', sans-serif", fontSize: '13px', fontWeight: '600', letterSpacing: '0.05em',
   },
   catActive: {
-    padding: '6px 14px', borderRadius: '20px', whiteSpace: 'nowrap',
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-    border: 'none', color: 'white', fontSize: '13px', fontWeight: '700',
+    padding: '8px 16px', borderRadius: '9999px', whiteSpace: 'nowrap',
+    backgroundColor: '#d4af37', border: 'none', color: '#3c2f00',
+    fontFamily: "'Manrope', sans-serif", fontSize: '13px', fontWeight: '700', letterSpacing: '0.05em',
   },
 
   itemList: { flex: 1, overflowY: 'auto', padding: '12px 24px', display: 'flex', flexDirection: 'column', gap: '8px' },
   menuItem: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '12px 14px', backgroundColor: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px',
+    padding: '14px', backgroundColor: 'rgba(32, 32, 31, 0.5)',
+    border: '1px solid rgba(212, 175, 55, 0.08)', borderRadius: '8px',
   },
-  menuItemInfo: {},
-  menuItemName: { fontSize: '14px', fontWeight: '600', color: '#f1f1f1' },
-  menuItemPrice: { fontSize: '13px', color: '#f59e0b', fontWeight: '600', marginTop: '3px' },
+  menuItemName: { fontFamily: "'Manrope', sans-serif", fontSize: '14px', fontWeight: '600', color: '#e5e2e1' },
+  menuItemPrice: { fontFamily: "'Playfair Display', serif", fontSize: '14px', color: '#f2ca50', fontWeight: '600', marginTop: '4px' },
   qtyControl: { display: 'flex', alignItems: 'center', gap: '8px' },
   qtyBtn: {
-    width: '28px', height: '28px', borderRadius: '8px', fontSize: '16px', fontWeight: '700',
-    backgroundColor: 'rgba(255,255,255,0.08)', color: '#f1f1f1', border: 'none',
+    width: '30px', height: '30px', borderRadius: '4px', fontSize: '16px', fontWeight: '700',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)', color: '#f2ca50', border: '1px solid rgba(212, 175, 55, 0.3)',
   },
   qtyBtnAdd: {
-    width: '28px', height: '28px', borderRadius: '8px', fontSize: '16px', fontWeight: '700',
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', border: 'none',
+    width: '30px', height: '30px', borderRadius: '4px', fontSize: '16px', fontWeight: '700',
+    backgroundColor: '#d4af37', color: '#3c2f00', border: 'none',
   },
-  qtyNum: { fontSize: '15px', fontWeight: '700', color: '#f1f1f1', minWidth: '20px', textAlign: 'center' },
+  qtyNum: { fontFamily: "'Manrope', sans-serif", fontSize: '15px', fontWeight: '700', color: '#e5e2e1', minWidth: '20px', textAlign: 'center' },
 
   notesArea: { padding: '0 24px 12px' },
   notesInput: {
-    width: '100%', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '10px', padding: '10px 14px', color: '#f1f1f1', fontSize: '14px',
-    outline: 'none', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box',
+    width: '100%', backgroundColor: 'transparent', border: 'none',
+    borderBottom: '1px solid rgba(229, 226, 225, 0.2)',
+    padding: '12px 0', color: '#e5e2e1', fontSize: '14px',
+    outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box',
   },
 
   footer: {
-    padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.08)',
+    padding: '20px 24px', borderTop: '1px solid rgba(212, 175, 55, 0.1)',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
   },
   cartSummary: { display: 'flex', flexDirection: 'column', gap: '2px' },
-  cartCount: { fontSize: '12px', color: '#8b8b9e' },
-  cartTotal: { fontSize: '22px', fontWeight: '800', color: '#f59e0b' },
+  cartCount: { fontFamily: "'Manrope', sans-serif", fontSize: '12px', color: '#d0c5af', letterSpacing: '0.03em' },
+  cartTotal: { fontFamily: "'Playfair Display', serif", fontSize: '28px', fontWeight: '700', color: '#f2ca50' },
   orderBtn: {
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white',
-    fontWeight: '700', fontSize: '15px', padding: '13px 24px', borderRadius: '12px',
-    border: 'none', whiteSpace: 'nowrap',
+    backgroundColor: '#d4af37', color: '#3c2f00',
+    fontFamily: "'Manrope', sans-serif", fontWeight: '700', fontSize: '14px',
+    padding: '14px 24px', borderRadius: '4px', border: 'none', whiteSpace: 'nowrap',
+    letterSpacing: '0.05em', boxShadow: '0 10px 20px -10px rgba(212, 175, 55, 0.4)',
   },
-  closeOrderBtn: {
-    backgroundColor: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)',
-    color: '#10b981', fontWeight: '700', fontSize: '15px', padding: '13px 24px', borderRadius: '12px',
+  paymentBtn: {
+    backgroundColor: '#d4af37', color: '#3c2f00', border: 'none',
+    fontFamily: "'Manrope', sans-serif", fontWeight: '700', fontSize: '14px',
+    padding: '14px 24px', borderRadius: '4px', letterSpacing: '0.05em',
+    boxShadow: '0 10px 20px -10px rgba(212, 175, 55, 0.4)',
   },
 
   orderInfo: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '16px 24px', backgroundColor: 'rgba(255,255,255,0.03)',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    padding: '16px 24px', backgroundColor: 'rgba(32, 32, 31, 0.5)',
+    borderBottom: '1px solid rgba(212, 175, 55, 0.08)',
   },
-  orderInfoLabel: { fontSize: '15px', fontWeight: '700', color: '#f1f1f1' },
+  orderInfoLabel: { fontFamily: "'Playfair Display', serif", fontSize: '18px', fontWeight: '600', color: '#f2ca50' },
   orderStatus: {
-    fontSize: '12px', fontWeight: '700', color: '#f59e0b',
-    backgroundColor: 'rgba(245,158,11,0.1)', padding: '4px 10px', borderRadius: '20px',
+    fontFamily: "'Manrope', sans-serif", fontSize: '12px', fontWeight: '600', color: '#d4af37',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)', padding: '4px 12px', borderRadius: '4px', letterSpacing: '0.05em',
   },
   activeItem: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '10px 14px', backgroundColor: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px',
+    padding: '12px 14px', backgroundColor: 'rgba(32, 32, 31, 0.3)',
+    border: '1px solid rgba(212, 175, 55, 0.06)', borderRadius: '8px',
   },
   activeItemQty: {
-    backgroundColor: 'rgba(245,158,11,0.15)', color: '#f59e0b',
-    padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', marginRight: '10px',
+    fontFamily: "'Manrope', sans-serif", backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    color: '#f2ca50', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: '700',
+    letterSpacing: '0.05em', minWidth: '28px', textAlign: 'center',
   },
-  activeItemName: { fontSize: '14px', color: '#f1f1f1', fontWeight: '500' },
+  activeItemName: { fontFamily: "'Manrope', sans-serif", fontSize: '14px', color: '#e5e2e1', fontWeight: '500' },
   activeItemRight: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' },
-  activeItemPrice: { fontSize: '13px', color: '#8b8b9e' },
+  activeItemPrice: { fontFamily: "'Manrope', sans-serif", fontSize: '13px', color: '#d0c5af' },
 };

@@ -2,26 +2,20 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
 
-const ORDER_STATUS = {
-  PENDING:     { label: 'Bekliyor',     color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  IN_PROGRESS: { label: 'Hazırlanıyor', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-  READY:       { label: 'Hazır',        color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-};
-
-const ITEM_STATUS = {
-  WAITING:   { label: 'Bekliyor',      color: '#8b8b9e' },
-  PREPARING: { label: 'Hazırlanıyor',  color: '#3b82f6' },
-  READY:     { label: '✅ Hazır',      color: '#10b981' },
-  SERVED:    { label: 'Servis edildi', color: '#8b8b9e' },
+const STATUS_LABELS = {
+  WAITING: 'Bekliyor',
+  PREPARING: 'Hazırlanıyor',
+  READY: 'Hazır',
+  SERVED: 'Servis Edildi',
 };
 
 export default function KitchenPage() {
-  const [orders, setOrders]   = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
     try {
-      const res = await api.get('/api/kitchen/orders');
+      const res = await api.get('/api/kitchen/orders'); // ✅ Düzeltildi
       setOrders(res.data);
     } catch (e) {
       console.error('Siparişler yüklenemedi:', e);
@@ -38,7 +32,7 @@ export default function KitchenPage() {
 
   const handleStartOrder = async (orderId) => {
     try {
-      await api.patch(`/api/kitchen/orders/${orderId}/start`);
+      await api.patch(`/api/kitchen/orders/${orderId}/start`); // ✅ Düzeltildi
       fetchOrders();
     } catch (e) {
       alert('Sipariş başlatılamadı!');
@@ -47,30 +41,112 @@ export default function KitchenPage() {
 
   const handleItemReady = async (itemId) => {
     try {
-      await api.patch(`/api/kitchen/items/${itemId}/ready`);
+      await api.patch(`/api/kitchen/items/${itemId}/ready`); // ✅ Düzeltildi
       fetchOrders();
     } catch (e) {
       alert('Kalem güncellenemedi!');
     }
   };
 
-  // orderStatus kullanıyoruz (API'den böyle geliyor)
+  // ✅ Düzeltildi: orderStatus kullanıyoruz
   const pendingOrders    = orders.filter(o => o.orderStatus === 'PENDING');
   const inProgressOrders = orders.filter(o => o.orderStatus === 'IN_PROGRESS');
   const readyOrders      = orders.filter(o => o.orderStatus === 'READY');
+
+  const renderTicket = (order, columnType) => {
+    const isWaiting   = columnType === 'PENDING';
+    const isPreparing = columnType === 'IN_PROGRESS';
+    const isReady     = columnType === 'READY';
+
+    return (
+      <article key={order.orderId} style={{
+        ...styles.ticket,
+        border: isWaiting   ? '1px solid rgba(212, 175, 55, 0.3)' :
+                isPreparing ? '1px solid rgba(212, 175, 55, 0.4)' :
+                              '1px solid rgba(153, 144, 124, 0.3)',
+      }}>
+        {isWaiting && <div style={styles.ticketUrgentBar} />}
+
+        <div style={styles.ticketHeader}>
+          <div>
+            <h3 style={{ ...styles.ticketId, color: isReady ? '#99907c' : '#f2ca50' }}>
+              #{order.orderId}
+            </h3>
+            <p style={styles.ticketMeta}>
+              Masa {order.tableNumber}
+              {order.waiterName ? ` • ${order.waiterName}` : ''}
+              {order.createdAt ? ` • ⏱ ${getElapsedTime(order.createdAt)}` : ''}
+            </p>
+          </div>
+        </div>
+
+        <div style={{ background: 'linear-gradient(to right, transparent, rgba(212, 175, 55, 0.3), transparent)', height: '1px', width: '100%' }} />
+
+        <ul style={styles.ticketItems}>
+          {order.items?.map(item => {
+            const isDone = item.itemStatus === 'SERVED' || item.itemStatus === 'READY';
+            return (
+              <li key={item.id} style={{
+                ...styles.ticketItem,
+                opacity: isDone ? 0.5 : 1,
+                textDecoration: item.itemStatus === 'SERVED' ? 'line-through' : 'none',
+              }}>
+                <span style={styles.itemQty}>{item.quantity}x</span>
+                <div style={{ flex: 1 }}>
+                  <p style={styles.itemName}>{item.menuItemName}</p>
+                  {item.notes && <p style={styles.itemNotes}>- {item.notes}</p>}
+                </div>
+                {item.itemStatus === 'PREPARING' && isPreparing && (
+                  <button onClick={() => handleItemReady(item.id)} style={styles.itemReadyBtn}>
+                    Hazır
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+
+        {order.notes && (
+          <div style={styles.orderNotes}>📋 {order.notes}</div>
+        )}
+
+        <div style={styles.ticketActions}>
+          {isWaiting && (
+            <button onClick={() => handleStartOrder(order.orderId)} style={styles.btnGhost}>
+              HAZIRLANIYOR
+            </button>
+          )}
+          {isPreparing && (
+            <button
+              onClick={() => order.items?.forEach(i => {
+                if (i.itemStatus === 'PREPARING') handleItemReady(i.id);
+              })}
+              style={styles.btnPrimary}
+            >
+              TÜMÜ HAZIR
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  };
 
   return (
     <div style={styles.page}>
       <Navbar />
 
-      <div style={styles.content}>
-        <div style={styles.header}>
-          <h2 style={styles.title}>👨‍🍳 Mutfak Ekranı</h2>
-          <div style={styles.headerRight}>
-            <span style={styles.autoRefresh}>🔄 10sn'de bir güncellenir</span>
-            <button onClick={fetchOrders} style={styles.refreshBtn}>Şimdi Yenile</button>
+      <main style={styles.main}>
+        <header style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Mutfak Ekranı</h1>
+            <p style={styles.subtitle}>
+              {new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} | Aktif Servis
+            </p>
           </div>
-        </div>
+          <button onClick={fetchOrders} style={styles.syncBtn}>
+            🔄 Yenile
+          </button>
+        </header>
 
         {loading ? (
           <p style={styles.loadingText}>Yükleniyor...</p>
@@ -80,128 +156,53 @@ export default function KitchenPage() {
             <p style={styles.emptyText}>Tüm siparişler tamamlandı!</p>
           </div>
         ) : (
-          <div style={styles.columns}>
+          <div style={styles.board}>
 
-            {/* BEKLEYEN */}
-            <div style={styles.column}>
+            {/* Bekliyor */}
+            <section style={styles.column}>
               <div style={styles.columnHeader}>
-                <span style={styles.dot('#f59e0b')} />
-                <h3 style={styles.columnTitle}>Bekliyor</h3>
-                <span style={styles.columnCount}>{pendingOrders.length}</span>
+                <h2 style={styles.columnTitle}>
+                  <span style={{ ...styles.statusDot, backgroundColor: '#ffb4ab', animation: 'pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+                  Bekliyor
+                </h2>
+                <span style={styles.countBadge}>{pendingOrders.length} Sipariş</span>
               </div>
-              {pendingOrders.map(order => (
-                <OrderCard
-                  key={order.orderId}
-                  order={order}
-                  onStart={() => handleStartOrder(order.orderId)}
-                  onItemReady={handleItemReady}
-                />
-              ))}
-            </div>
+              <div style={styles.columnBody}>
+                {pendingOrders.map(o => renderTicket(o, 'PENDING'))}
+              </div>
+            </section>
 
-            {/* HAZIRLANIYOR */}
-            <div style={styles.column}>
+            {/* Hazırlanıyor */}
+            <section style={styles.column}>
               <div style={styles.columnHeader}>
-                <span style={styles.dot('#3b82f6')} />
-                <h3 style={styles.columnTitle}>Hazırlanıyor</h3>
-                <span style={styles.columnCount}>{inProgressOrders.length}</span>
+                <h2 style={styles.columnTitle}>
+                  <span style={{ ...styles.statusDot, backgroundColor: '#f2ca50', animation: 'pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+                  Hazırlanıyor
+                </h2>
+                <span style={styles.countBadge}>{inProgressOrders.length} Sipariş</span>
               </div>
-              {inProgressOrders.map(order => (
-                <OrderCard
-                  key={order.orderId}
-                  order={order}
-                  onItemReady={handleItemReady}
-                />
-              ))}
-            </div>
+              <div style={styles.columnBody}>
+                {inProgressOrders.map(o => renderTicket(o, 'IN_PROGRESS'))}
+              </div>
+            </section>
 
-            {/* HAZIR */}
-            <div style={styles.column}>
+            {/* Hazır */}
+            <section style={styles.column}>
               <div style={styles.columnHeader}>
-                <span style={styles.dot('#10b981')} />
-                <h3 style={styles.columnTitle}>Hazır</h3>
-                <span style={styles.columnCount}>{readyOrders.length}</span>
+                <h2 style={styles.columnTitle}>
+                  <span style={{ ...styles.statusDot, backgroundColor: '#99907c' }} />
+                  Hazır
+                </h2>
+                <span style={styles.countBadge}>{readyOrders.length} Sipariş</span>
               </div>
-              {readyOrders.map(order => (
-                <OrderCard key={order.orderId} order={order} />
-              ))}
-            </div>
+              <div style={{ ...styles.columnBody, opacity: 0.8 }}>
+                {readyOrders.map(o => renderTicket(o, 'READY'))}
+              </div>
+            </section>
 
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function OrderCard({ order, onStart, onItemReady }) {
-  // orderStatus kullanıyoruz
-  const status  = ORDER_STATUS[order.orderStatus] || ORDER_STATUS.PENDING;
-  const elapsed = getElapsedTime(order.createdAt);
-
-  return (
-    <div style={styles.orderCard}>
-      {/* Başlık */}
-      <div style={{ ...styles.orderHeader, backgroundColor: status.bg }}>
-        <div>
-          <span style={styles.tableLabel}>Masa {order.tableNumber}</span>
-          <span style={{ ...styles.statusLabel, color: status.color }}>
-            {status.label}
-          </span>
-        </div>
-        <div style={styles.orderMeta}>
-          <span style={styles.orderId}>#{order.orderId}</span>
-          <span style={styles.elapsed}>⏱ {elapsed}</span>
-        </div>
-      </div>
-
-      {/* Kalemler */}
-      <div style={styles.items}>
-        {order.items?.map(item => {
-          const itemStatus = ITEM_STATUS[item.itemStatus] || ITEM_STATUS.WAITING;
-          const isReady    = item.itemStatus === 'READY' || item.itemStatus === 'SERVED';
-
-          return (
-            <div key={item.id} style={styles.item}>
-              <div style={styles.itemLeft}>
-                <span style={styles.itemQty}>{item.quantity}x</span>
-                <div>
-                  <p style={{
-                    ...styles.itemName,
-                    textDecoration: isReady ? 'line-through' : 'none',
-                    opacity: isReady ? 0.5 : 1,
-                  }}>
-                    {item.menuItemName}
-                  </p>
-                  {item.notes && <p style={styles.itemNotes}>📝 {item.notes}</p>}
-                </div>
-              </div>
-              <div style={styles.itemRight}>
-                <span style={{ color: itemStatus.color, fontSize: '12px', fontWeight: '600' }}>
-                  {itemStatus.label}
-                </span>
-                {item.itemStatus === 'PREPARING' && onItemReady && (
-                  <button onClick={() => onItemReady(item.id)} style={styles.readyBtn}>
-                    Hazır
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Sipariş Notu */}
-      {order.notes && (
-        <div style={styles.orderNotes}>📋 {order.notes}</div>
-      )}
-
-      {/* Başlat Butonu — orderStatus kullanıyoruz */}
-      {order.orderStatus === 'PENDING' && onStart && (
-        <button onClick={onStart} style={styles.startBtn}>
-          🚀 Hazırlamaya Başla
-        </button>
-      )}
+      </main>
     </div>
   );
 }
@@ -215,77 +216,239 @@ function getElapsedTime(createdAt) {
 }
 
 const styles = {
-  page:    { minHeight: '100vh', backgroundColor: '#0a0a0f' },
-  content: { maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' },
-  header:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' },
-  title:   { fontSize: '24px', fontWeight: '700', color: '#f1f1f1' },
-  headerRight: { display: 'flex', alignItems: 'center', gap: '12px' },
-  autoRefresh: { fontSize: '12px', color: '#8b8b9e' },
-  refreshBtn:  {
-    padding: '8px 16px', borderRadius: '8px',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    color: '#8b8b9e', fontSize: '13px',
+  page: { minHeight: '100vh', backgroundColor: '#131313', display: 'flex', flexDirection: 'column' },
+  main: {
+    flex: 1,
+    padding: '24px 64px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+    overflow: 'hidden',
   },
-  columns: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', alignItems: 'start' },
-  column:  { display: 'flex', flexDirection: 'column', gap: '16px' },
-  columnHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' },
-  columnTitle:  { fontSize: '15px', fontWeight: '700', color: '#f1f1f1', flex: 1 },
-  columnCount:  {
-    backgroundColor: 'rgba(255,255,255,0.08)', color: '#8b8b9e',
-    padding: '2px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
   },
-  dot: (color) => ({
-    width: '10px', height: '10px', borderRadius: '50%', backgroundColor: color, display: 'inline-block',
-  }),
-  orderCard: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '16px', overflow: 'hidden',
+  title: {
+    fontFamily: "'Playfair Display', serif",
+    fontSize: '32px',
+    fontWeight: '600',
+    color: '#e5e2e1',
+    lineHeight: '1.2',
   },
-  orderHeader: {
-    display: 'flex', justifyContent: 'space-between',
-    alignItems: 'center', padding: '12px 16px',
+  subtitle: {
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#d0c5af',
+    letterSpacing: '0.05em',
+    marginTop: '4px',
   },
-  tableLabel:  { fontSize: '16px', fontWeight: '700', color: '#f1f1f1', display: 'block' },
-  statusLabel: { fontSize: '12px', fontWeight: '600', marginTop: '2px', display: 'block' },
-  orderMeta:   { textAlign: 'right' },
-  orderId:     { fontSize: '13px', color: '#8b8b9e', display: 'block' },
-  elapsed:     { fontSize: '12px', color: '#f59e0b', fontWeight: '600', display: 'block', marginTop: '2px' },
-  items: { padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' },
-  item:  {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-    padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+  syncBtn: {
+    padding: '10px 20px',
+    backgroundColor: '#d4af37',
+    color: '#3c2f00',
+    borderRadius: '4px',
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '14px',
+    fontWeight: '600',
+    letterSpacing: '0.05em',
+    boxShadow: '0 10px 20px -10px rgba(212, 175, 55, 0.4)',
+    border: 'none',
+    cursor: 'pointer',
   },
-  itemLeft:  { display: 'flex', gap: '10px', alignItems: 'flex-start' },
-  itemQty:   {
-    backgroundColor: 'rgba(245,158,11,0.15)', color: '#f59e0b',
-    padding: '2px 8px', borderRadius: '6px', fontSize: '13px', fontWeight: '700',
-    minWidth: '28px', textAlign: 'center',
+  loadingText: { textAlign: 'center', color: '#d0c5af', marginTop: '60px' },
+  emptyState: { textAlign: 'center', marginTop: '80px' },
+  emptyIcon: { fontSize: '48px', display: 'block', marginBottom: '16px' },
+  emptyText: { color: '#d0c5af', fontSize: '18px', fontFamily: "'Manrope', sans-serif" },
+
+  board: {
+    flex: 1,
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '24px',
+    overflow: 'hidden',
   },
-  itemName:  { fontSize: '14px', color: '#f1f1f1', fontWeight: '500' },
-  itemNotes: { fontSize: '12px', color: '#8b8b9e', marginTop: '2px' },
-  itemRight: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' },
-  readyBtn:  {
-    padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '600',
-    backgroundColor: 'rgba(16,185,129,0.15)', color: '#10b981',
+  column: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    backgroundColor: 'rgba(27, 27, 27, 0.3)',
+    borderRadius: '12px',
+    border: '1px solid rgba(212, 175, 55, 0.05)',
+    overflow: 'hidden',
+  },
+  columnHeader: {
+    padding: '12px 16px',
+    borderBottom: '1px solid rgba(212, 175, 55, 0.1)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(53, 53, 53, 0.5)',
+    backdropFilter: 'blur(8px)',
+  },
+  columnTitle: {
+    fontFamily: "'Playfair Display', serif",
+    fontSize: '24px',
+    fontWeight: '600',
+    color: '#e5e2e1',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    lineHeight: '1.3',
+  },
+  statusDot: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    display: 'inline-block',
+  },
+  countBadge: {
+    fontFamily: "'Manrope', sans-serif",
+    backgroundColor: '#353535',
+    color: '#d0c5af',
+    padding: '4px 10px',
+    borderRadius: '9999px',
+    fontSize: '12px',
+    fontWeight: '500',
+  },
+  columnBody: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+
+  ticket: {
+    backgroundColor: 'rgba(28, 28, 28, 0.8)',
+    backdropFilter: 'blur(16px)',
+    borderRadius: '8px',
+    padding: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    boxShadow: '0 20px 40px -10px rgba(5, 8, 20, 0.5)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  ticketUrgentBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '3px',
+    height: '100%',
+    backgroundColor: '#ffb4ab',
+  },
+  ticketHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingLeft: '8px',
+  },
+  ticketId: {
+    fontFamily: "'Playfair Display', serif",
+    fontSize: '24px',
+    fontWeight: '600',
+    lineHeight: '1.3',
+  },
+  ticketMeta: {
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '12px',
+    fontWeight: '500',
+    color: '#d0c5af',
+    letterSpacing: '0.03em',
+    marginTop: '4px',
+  },
+  ticketItems: {
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    paddingLeft: '8px',
+  },
+  ticketItem: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '12px',
+  },
+  itemQty: {
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#f2ca50',
+    letterSpacing: '0.05em',
+    paddingTop: '2px',
+  },
+  itemName: {
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '16px',
+    fontWeight: '400',
+    color: '#e5e2e1',
+    lineHeight: '1.6',
+  },
+  itemNotes: {
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '12px',
+    fontWeight: '500',
+    color: '#d0c5af',
+    letterSpacing: '0.03em',
+    marginTop: '2px',
+  },
+  itemReadyBtn: {
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: '600',
+    backgroundColor: 'rgba(16,185,129,0.15)',
+    color: '#10b981',
     border: '1px solid rgba(16,185,129,0.3)',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
   },
   orderNotes: {
-    margin: '0 16px 12px', padding: '8px 12px',
-    backgroundColor: 'rgba(245,158,11,0.08)',
-    border: '1px solid rgba(245,158,11,0.15)',
-    borderRadius: '8px', fontSize: '13px', color: '#f59e0b',
+    margin: '0 0 4px 8px',
+    padding: '8px 12px',
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    border: '1px solid rgba(212, 175, 55, 0.15)',
+    borderRadius: '8px',
+    fontSize: '13px',
+    color: '#f2ca50',
+    fontFamily: "'Manrope', sans-serif",
   },
-  startBtn: {
-    width: '100%', padding: '12px',
-    backgroundColor: 'rgba(59,130,246,0.15)',
-    borderTop: '1px solid rgba(59,130,246,0.2)',
-    color: '#3b82f6', fontSize: '14px', fontWeight: '700',
+
+  ticketActions: {
+    marginTop: '8px',
+    paddingTop: '16px',
+    borderTop: '1px solid rgba(212, 175, 55, 0.1)',
   },
-  loadingText: { textAlign: 'center', color: '#8b8b9e', marginTop: '60px' },
-  emptyState:  { textAlign: 'center', marginTop: '80px' },
-  emptyIcon:   { fontSize: '48px', display: 'block', marginBottom: '16px' },
-  emptyText:   { color: '#8b8b9e', fontSize: '18px' },
+  btnGhost: {
+    width: '100%',
+    padding: '14px',
+    borderRadius: '4px',
+    border: '1px solid rgba(212, 175, 55, 0.4)',
+    backgroundColor: 'transparent',
+    color: '#e5e2e1',
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '14px',
+    fontWeight: '600',
+    letterSpacing: '0.1em',
+    cursor: 'pointer',
+  },
+  btnPrimary: {
+    width: '100%',
+    padding: '14px',
+    borderRadius: '4px',
+    border: 'none',
+    backgroundColor: '#d4af37',
+    color: '#3c2f00',
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '14px',
+    fontWeight: '600',
+    letterSpacing: '0.1em',
+    boxShadow: '0 10px 20px -10px rgba(212, 175, 55, 0.3)',
+    cursor: 'pointer',
+  },
 };

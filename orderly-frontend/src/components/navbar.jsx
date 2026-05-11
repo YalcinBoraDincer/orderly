@@ -11,26 +11,23 @@ export default function Navbar() {
     try {
       const userId = localStorage.getItem('userId');
       if (userId) await api.post(`/api/auth/logout?userId=${userId}`);
-    } catch (e) { /* sessizce devam et */ }
+    } catch (e) { /* silent */ }
     logout();
     navigate('/login');
   };
 
   const navLinks = [
-    { path: '/dashboard', label: '🏠 Masalar', roles: ['ADMIN', 'WAITER', 'KITCHEN'] },
-    { path: '/kitchen',   label: '👨‍🍳 Mutfak',  roles: ['ADMIN', 'KITCHEN'] },
-    { path: '/admin',     label: '⚙️ Yönetim', roles: ['ADMIN'] },
+    { path: '/dashboard', label: 'Masalar', roles: ['ADMIN', 'WAITER', 'KITCHEN'] },
+    { path: '/kitchen',   label: 'Mutfak',  roles: ['ADMIN', 'KITCHEN'] },
+    { path: '/admin',     label: 'Yönetim', roles: ['ADMIN'] },
   ];
 
   return (
     <nav style={styles.nav}>
-      {/* Logo */}
-      <div style={styles.logo}>
-        <span style={styles.logoIcon}>🍽️</span>
+      <div style={styles.logo} onClick={() => navigate('/dashboard')}>
         <span style={styles.logoText}>Orderly</span>
       </div>
 
-      {/* Linkler */}
       <div style={styles.links}>
         {navLinks
           .filter(link => link.roles.includes(user?.role))
@@ -45,7 +42,6 @@ export default function Navbar() {
           ))}
       </div>
 
-      {/* Kullanıcı Bilgisi */}
       <div style={styles.userArea}>
         <div style={styles.userInfo}>
           <span style={styles.username}>{user?.username}</span>
@@ -64,49 +60,58 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 32px',
-    height: '64px',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderBottom: '1px solid rgba(255,255,255,0.08)',
-    backdropFilter: 'blur(20px)',
+    padding: '0 64px',
+    height: '80px',
+    backgroundColor: 'rgba(19, 19, 19, 0.8)',
+    borderBottom: '1px solid rgba(212, 175, 55, 0.2)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
     position: 'sticky',
     top: 0,
     zIndex: 100,
+    boxShadow: '0 40px 60px -15px rgba(5, 8, 20, 0.5)',
   },
   logo: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
+    cursor: 'pointer',
   },
-  logoIcon: { fontSize: '24px' },
   logoText: {
-    fontSize: '20px',
-    fontWeight: '800',
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    fontFamily: "'Playfair Display', serif",
+    fontSize: '28px',
+    fontWeight: '700',
+    color: '#f2ca50',
+    letterSpacing: '-0.02em',
   },
   links: {
     display: 'flex',
     gap: '8px',
+    alignItems: 'center',
   },
   link: {
-    padding: '8px 16px',
-    borderRadius: '8px',
+    padding: '10px 20px',
+    borderRadius: '4px',
     backgroundColor: 'transparent',
-    color: '#8b8b9e',
-    fontSize: '14px',
-    fontWeight: '500',
-    transition: 'all 0.2s',
-  },
-  linkActive: {
-    padding: '8px 16px',
-    borderRadius: '8px',
-    backgroundColor: 'rgba(245,158,11,0.12)',
-    color: '#f59e0b',
+    color: 'rgba(208, 197, 175, 0.7)',
+    fontFamily: "'Manrope', sans-serif",
     fontSize: '14px',
     fontWeight: '600',
-    border: '1px solid rgba(245,158,11,0.2)',
+    letterSpacing: '0.05em',
+    transition: 'all 0.3s',
+    border: 'none',
+  },
+  linkActive: {
+    padding: '10px 20px',
+    borderRadius: '4px',
+    backgroundColor: 'transparent',
+    color: '#f2ca50',
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '14px',
+    fontWeight: '700',
+    letterSpacing: '0.05em',
+    borderBottom: '2px solid #f2ca50',
+    paddingBottom: '8px',
   },
   userArea: {
     display: 'flex',
@@ -119,24 +124,29 @@ const styles = {
     alignItems: 'flex-end',
   },
   username: {
+    fontFamily: "'Manrope', sans-serif",
     fontSize: '14px',
     fontWeight: '600',
-    color: '#f1f1f1',
+    color: '#e5e2e1',
   },
   role: {
+    fontFamily: "'Manrope', sans-serif",
     fontSize: '11px',
-    color: '#f59e0b',
+    color: '#d4af37',
     fontWeight: '500',
-    letterSpacing: '1px',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
   },
   logoutBtn: {
     padding: '8px 16px',
-    borderRadius: '8px',
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    border: '1px solid rgba(239,68,68,0.2)',
-    color: '#ef4444',
+    borderRadius: '4px',
+    backgroundColor: 'transparent',
+    border: '1px solid rgba(212, 175, 55, 0.3)',
+    color: '#e5e2e1',
+    fontFamily: "'Manrope', sans-serif",
     fontSize: '13px',
     fontWeight: '600',
+    letterSpacing: '0.05em',
     transition: 'all 0.2s',
   },
 };

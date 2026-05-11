@@ -12,15 +12,17 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+
   const handleLogin = async (e) => {
-    e.preventDefault(); // Sayfanın yenilenmesini engelle
+    e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
       const response = await api.post('/api/auth/login', { username, password });
-      login(response.data);         // Token'ları kaydet
-      navigate('/dashboard');        // Dashboard'a yönlendir
+      console.log('LOGIN RESPONSE:', response.data); // ← ekle
+      login(response.data);
+      navigate('/dashboard');
     } catch (err) {
       setError('Kullanıcı adı veya şifre hatalı');
     } finally {
@@ -28,24 +30,21 @@ export default function LoginPage() {
     }
   };
 
+
   return (
     <div style={styles.container}>
-      {/* Arka plan efekti */}
-      <div style={styles.bgGlow1} />
-      <div style={styles.bgGlow2} />
+      <div style={styles.bgGlow} />
 
       <div style={styles.card}>
-        {/* Logo */}
         <div style={styles.logoArea}>
-          <span style={styles.logoIcon}>🍽️</span>
           <h1 style={styles.logoText}>Orderly</h1>
-          <p style={styles.subtitle}>Restoran Yönetim Sistemi</p>
+          <div style={styles.divider} />
+          <p style={styles.subtitle}>Premium Restoran Yönetimi</p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleLogin} style={styles.form}>
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Kullanıcı Adı</label>
+            <label style={styles.label}>KULLANICI ADI</label>
             <input
               type="text"
               value={username}
@@ -57,7 +56,7 @@ export default function LoginPage() {
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Şifre</label>
+            <label style={styles.label}>ŞİFRE</label>
             <input
               type="password"
               value={password}
@@ -68,8 +67,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Hata mesajı */}
-          {error && <p style={styles.error}>⚠️ {error}</p>}
+          {error && <p style={styles.error}>{error}</p>}
 
           <button
             type="submit"
@@ -79,6 +77,8 @@ export default function LoginPage() {
             {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
           </button>
         </form>
+
+        <p style={styles.footer}>Orderly Hospitality</p>
       </div>
     </div>
   );
@@ -90,65 +90,64 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0a0a0f',
+    backgroundColor: '#131313',
     position: 'relative',
     overflow: 'hidden',
   },
-  bgGlow1: {
+  bgGlow: {
     position: 'absolute',
-    width: '400px',
-    height: '400px',
+    width: '600px',
+    height: '600px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)',
-    top: '-100px',
-    left: '-100px',
-    pointerEvents: 'none',
-  },
-  bgGlow2: {
-    position: 'absolute',
-    width: '350px',
-    height: '350px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(239,68,68,0.1) 0%, transparent 70%)',
-    bottom: '-80px',
-    right: '-80px',
+    background: 'radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%)',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
     pointerEvents: 'none',
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '24px',
-    padding: '48px 40px',
+    backgroundColor: 'rgba(28, 28, 28, 0.8)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(212, 175, 55, 0.2)',
+    borderRadius: '8px',
+    padding: '56px 48px',
     width: '100%',
     maxWidth: '420px',
-    backdropFilter: 'blur(20px)',
     position: 'relative',
     zIndex: 1,
+    boxShadow: '0 40px 60px -15px rgba(5, 8, 20, 0.5)',
   },
   logoArea: {
     textAlign: 'center',
-    marginBottom: '40px',
-  },
-  logoIcon: {
-    fontSize: '48px',
+    marginBottom: '48px',
   },
   logoText: {
-    fontSize: '32px',
-    fontWeight: '800',
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    marginTop: '8px',
+    fontFamily: "'Playfair Display', serif",
+    fontSize: '40px',
+    fontWeight: '700',
+    color: '#f2ca50',
+    letterSpacing: '-0.02em',
+    margin: 0,
+  },
+  divider: {
+    width: '60px',
+    height: '1px',
+    background: 'linear-gradient(to right, transparent, rgba(212, 175, 55, 0.5), transparent)',
+    margin: '16px auto',
   },
   subtitle: {
-    color: '#8b8b9e',
+    fontFamily: "'Manrope', sans-serif",
+    color: '#d0c5af',
     fontSize: '14px',
-    marginTop: '6px',
+    fontWeight: '500',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '24px',
   },
   inputGroup: {
     display: 'flex',
@@ -156,39 +155,55 @@ const styles = {
     gap: '8px',
   },
   label: {
-    fontSize: '13px',
+    fontFamily: "'Manrope', sans-serif",
+    fontSize: '12px',
     fontWeight: '500',
-    color: '#8b8b9e',
-    letterSpacing: '0.5px',
+    color: '#d0c5af',
+    letterSpacing: '0.1em',
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '12px',
-    padding: '14px 16px',
-    color: '#f1f1f1',
-    fontSize: '15px',
+    backgroundColor: 'transparent',
+    borderTop: 'none',
+    borderLeft: 'none',
+    borderRight: 'none',
+    borderBottom: '1px solid rgba(229, 226, 225, 0.3)',
+    borderRadius: '0',
+    padding: '14px 0',
+    color: '#e5e2e1',
+    fontSize: '16px',
     outline: 'none',
-    transition: 'border 0.2s',
-    fontFamily: 'Inter, sans-serif',
+    transition: 'border-color 0.3s',
+    fontFamily: "'Manrope', sans-serif",
   },
   error: {
-    color: '#ef4444',
+    fontFamily: "'Manrope', sans-serif",
+    color: '#ffb4ab',
     fontSize: '13px',
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    border: '1px solid rgba(239,68,68,0.2)',
-    borderRadius: '8px',
-    padding: '10px 14px',
+    backgroundColor: 'rgba(147, 0, 10, 0.15)',
+    border: '1px solid rgba(147, 0, 10, 0.3)',
+    borderRadius: '4px',
+    padding: '12px 14px',
   },
   button: {
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-    color: 'white',
+    backgroundColor: '#d4af37',
+    color: '#3c2f00',
+    fontFamily: "'Manrope', sans-serif",
     fontWeight: '700',
-    fontSize: '16px',
-    padding: '15px',
-    borderRadius: '12px',
+    fontSize: '14px',
+    padding: '16px',
+    borderRadius: '4px',
     marginTop: '8px',
-    transition: 'opacity 0.2s, transform 0.1s',
-    letterSpacing: '0.3px',
+    transition: 'all 0.3s',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    boxShadow: '0 10px 20px -10px rgba(212, 175, 55, 0.4)',
+  },
+  footer: {
+    fontFamily: "'Manrope', sans-serif",
+    textAlign: 'center',
+    color: 'rgba(208, 197, 175, 0.4)',
+    fontSize: '12px',
+    letterSpacing: '0.05em',
+    marginTop: '32px',
   },
 };

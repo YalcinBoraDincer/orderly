@@ -1,4 +1,4 @@
-package com.bora.orderly.controller;
+package com.bora.orderly.controller.impl;
 
 import com.bora.orderly.dto.request.PaymentRequest;
 import com.bora.orderly.dto.response.PaymentResponse;

@@ -14,7 +14,7 @@ export default function PaymentModal({ order, onClose, onSuccess }) {
       const res = await api.get(`/api/payments/order/${order.id}`);
       setPayments(res.data);
     } catch (e) {
-      console.error('Ödemeler yüklenemedi:', e);
+      console.error(e);
     } finally {
       setLoadingPayments(false);
     }
@@ -28,8 +28,8 @@ export default function PaymentModal({ order, onClose, onSuccess }) {
     if (!window.confirm('Bu ödemeyi silmek istediğinize emin misiniz?')) return;
     try {
       await api.delete(`/api/payments/${paymentId}`);
-      onSuccess(); // Üst componenti güncelle (kalan tutar vs değişeceği için)
-      fetchPayments(); // Listeyi yenile
+      onSuccess();
+      fetchPayments();
     } catch (e) {
       alert(e.response?.data?.message || 'Ödeme silinemedi!');
     }
@@ -40,7 +40,6 @@ export default function PaymentModal({ order, onClose, onSuccess }) {
       alert(`Geçersiz tutar! Kalan tutar: ₺${order.remainingAmount}`);
       return;
     }
-    
     setSubmitting(true);
     try {
       await api.post('/api/payments', {
@@ -49,8 +48,8 @@ export default function PaymentModal({ order, onClose, onSuccess }) {
         tipAmount: tipAmount,
         paymentMethod: paymentMethod
       });
-      onSuccess(); // Başarılı ödeme sonrası üst componenti güncelle
-      onClose();   // Modalı kapat
+      onSuccess();
+      onClose();
     } catch (e) {
       alert(e.response?.data?.message || 'Ödeme alınamadı!');
     } finally {
@@ -58,42 +57,53 @@ export default function PaymentModal({ order, onClose, onSuccess }) {
     }
   };
 
+  const METHOD_LABELS = {
+    CASH: '💵 Nakit',
+    CREDIT_CARD: '💳 Kredi Kartı',
+    MEAL_CARD: '🎟️ Yemek Kartı'
+  };
+
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <div style={styles.header}>
-          <h2 style={styles.title}>Ödeme Al - Sipariş #{order.id}</h2>
+          <div>
+            <p style={styles.headerLabel}>SİPARİŞ #{order.id}</p>
+            <h2 style={styles.headerTitle}>Ödeme Al</h2>
+          </div>
           <button onClick={onClose} style={styles.closeBtn}>✕</button>
         </div>
 
         <div style={styles.body}>
+          {/* Summary */}
           <div style={styles.summaryCard}>
             <div style={styles.summaryRow}>
-              <span style={styles.summaryLabel}>Sipariş Toplamı:</span>
+              <span style={styles.summaryLabel}>Sipariş Toplamı</span>
               <span style={styles.summaryValue}>₺{order.totalAmount?.toFixed(2)}</span>
             </div>
             <div style={styles.summaryRow}>
-              <span style={styles.summaryLabel}>Ödenen:</span>
-              <span style={{...styles.summaryValue, color: '#10b981'}}>₺{order.paidAmount?.toFixed(2)}</span>
+              <span style={styles.summaryLabel}>Ödenen</span>
+              <span style={{...styles.summaryValue, color: '#d4af37'}}>₺{order.paidAmount?.toFixed(2)}</span>
             </div>
-            <div style={{...styles.summaryRow, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px', marginTop: '4px'}}>
-              <span style={{...styles.summaryLabel, fontWeight: '700'}}>Kalan Tutar:</span>
-              <span style={{...styles.summaryValue, color: '#ef4444', fontWeight: '800'}}>₺{order.remainingAmount?.toFixed(2)}</span>
+            <div style={styles.divider} />
+            <div style={styles.summaryRow}>
+              <span style={{...styles.summaryLabel, fontWeight: '700'}}>Kalan Tutar</span>
+              <span style={{...styles.summaryValue, color: '#ffb4ab', fontWeight: '800', fontFamily: "'Playfair Display', serif", fontSize: '20px'}}>
+                ₺{order.remainingAmount?.toFixed(2)}
+              </span>
             </div>
           </div>
 
-          {/* Geçmiş Ödemeler Listesi */}
+          {/* Past payments */}
           {!loadingPayments && payments.length > 0 && (
             <div style={styles.paymentsList}>
-              <h3 style={styles.listTitle}>Alınan Ödemeler</h3>
+              <h3 style={styles.listTitle}>ALINAN ÖDEMELER</h3>
               {payments.map(p => (
                 <div key={p.id} style={styles.paymentItem}>
                   <div>
-                    <span style={styles.paymentMethod}>
-                      {p.paymentMethod === 'CASH' ? '💵 Nakit' : p.paymentMethod === 'CREDIT_CARD' ? '💳 Kredi Kartı' : '🎟️ Yemek Kartı'}
-                    </span>
+                    <span style={styles.paymentMethod}>{METHOD_LABELS[p.paymentMethod]}</span>
                     <span style={styles.paymentAmount}>₺{p.amount.toFixed(2)}</span>
-                    {p.tipAmount > 0 && <span style={styles.paymentTip}>(+₺{p.tipAmount.toFixed(2)} Bahşiş)</span>}
+                    {p.tipAmount > 0 && <span style={styles.paymentTip}>(+₺{p.tipAmount.toFixed(2)})</span>}
                   </div>
                   <button onClick={() => handleDeletePayment(p.id)} style={styles.deleteBtn}>Sil</button>
                 </div>
@@ -101,50 +111,38 @@ export default function PaymentModal({ order, onClose, onSuccess }) {
             </div>
           )}
 
+          {/* Amount */}
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Tahsil Edilecek Tutar (₺)</label>
-            <input 
-              type="number" 
-              step="0.01" 
-              value={amount} 
-              onChange={e => setAmount(Number(e.target.value))}
-              style={styles.input}
-            />
+            <label style={styles.label}>TAHSİL EDİLECEK TUTAR (₺)</label>
+            <input type="number" step="0.01" value={amount} onChange={e => setAmount(Number(e.target.value))} style={styles.input} />
           </div>
 
+          {/* Tip */}
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Bahşiş (Tip) (₺)</label>
-            <input 
-              type="number" 
-              step="0.01" 
-              value={tipAmount} 
-              onChange={e => setTipAmount(Number(e.target.value))}
-              style={styles.input}
-            />
+            <label style={styles.label}>BAHŞİŞ (₺)</label>
+            <input type="number" step="0.01" value={tipAmount} onChange={e => setTipAmount(Number(e.target.value))} style={styles.input} />
           </div>
 
+          {/* Method */}
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Ödeme Yöntemi</label>
+            <label style={styles.label}>ÖDEME YÖNTEMİ</label>
             <div style={styles.methodContainer}>
-              <button 
-                onClick={() => setPaymentMethod('CASH')}
-                style={paymentMethod === 'CASH' ? styles.methodBtnActive : styles.methodBtn}
-              >💵 Nakit</button>
-              <button 
-                onClick={() => setPaymentMethod('CREDIT_CARD')}
-                style={paymentMethod === 'CREDIT_CARD' ? styles.methodBtnActive : styles.methodBtn}
-              >💳 Kredi Kartı</button>
-              <button 
-                onClick={() => setPaymentMethod('MEAL_CARD')}
-                style={paymentMethod === 'MEAL_CARD' ? styles.methodBtnActive : styles.methodBtn}
-              >🎟️ Yemek Kartı</button>
+              {Object.entries(METHOD_LABELS).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setPaymentMethod(key)}
+                  style={paymentMethod === key ? styles.methodBtnActive : styles.methodBtn}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
         <div style={styles.footer}>
           <button onClick={handleTakePayment} disabled={submitting} style={styles.submitBtn}>
-            {submitting ? 'İşleniyor...' : `Tahsil Et (₺${(Number(amount) + Number(tipAmount)).toFixed(2)})`}
+            {submitting ? 'İşleniyor...' : `Tahsil Et — ₺${(Number(amount) + Number(tipAmount)).toFixed(2)}`}
           </button>
         </div>
       </div>
@@ -159,69 +157,81 @@ const styles = {
     justifyContent: 'center', zIndex: 2000, padding: '20px',
   },
   modal: {
-    backgroundColor: '#1a1a24', border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '16px', width: '100%', maxWidth: '400px',
+    backgroundColor: '#1b1b1b', border: '1px solid rgba(212, 175, 55, 0.2)',
+    borderRadius: '8px', width: '100%', maxWidth: '420px',
     display: 'flex', flexDirection: 'column', overflow: 'hidden',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+    boxShadow: '0 40px 60px -15px rgba(5, 8, 20, 0.5)',
   },
   header: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+    padding: '24px', borderBottom: '1px solid rgba(212, 175, 55, 0.1)',
   },
-  title: { fontSize: '18px', fontWeight: '700', color: '#f1f1f1', margin: 0 },
+  headerLabel: {
+    fontFamily: "'Manrope', sans-serif", fontSize: '12px', fontWeight: '500',
+    letterSpacing: '0.1em', color: '#d0c5af', marginBottom: '4px',
+  },
+  headerTitle: {
+    fontFamily: "'Playfair Display', serif", fontSize: '24px', fontWeight: '600',
+    color: '#f2ca50', margin: 0, lineHeight: '1.3',
+  },
   closeBtn: {
-    backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-    color: '#8b8b9e', width: '32px', height: '32px', borderRadius: '8px', fontSize: '16px',
-    cursor: 'pointer'
+    backgroundColor: 'transparent', border: '1px solid rgba(212, 175, 55, 0.2)',
+    color: '#d0c5af', width: '36px', height: '36px', borderRadius: '4px', fontSize: '16px',
   },
-  body: { padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' },
+  body: { padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto', maxHeight: '60vh' },
+
   summaryCard: {
-    backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px',
-    border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: '8px'
+    backgroundColor: 'rgba(32, 32, 31, 0.5)', padding: '16px', borderRadius: '8px',
+    border: '1px solid rgba(212, 175, 55, 0.08)', display: 'flex', flexDirection: 'column', gap: '8px',
   },
   summaryRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  summaryLabel: { color: '#8b8b9e', fontSize: '14px' },
-  summaryValue: { color: '#f1f1f1', fontSize: '15px', fontWeight: '600' },
-  
-  inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  label: { fontSize: '13px', color: '#8b8b9e', fontWeight: '500' },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '10px', padding: '12px 14px', color: '#f1f1f1', fontSize: '16px',
-    outline: 'none', fontFamily: 'inherit'
+  summaryLabel: { fontFamily: "'Manrope', sans-serif", color: '#d0c5af', fontSize: '14px' },
+  summaryValue: { fontFamily: "'Manrope', sans-serif", color: '#e5e2e1', fontSize: '15px', fontWeight: '600' },
+  divider: { width: '100%', height: '1px', background: 'linear-gradient(to right, transparent, rgba(212, 175, 55, 0.3), transparent)', margin: '4px 0' },
+
+  paymentsList: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  listTitle: { fontFamily: "'Manrope', sans-serif", fontSize: '12px', color: '#d0c5af', letterSpacing: '0.1em', margin: 0 },
+  paymentItem: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: 'rgba(32, 32, 31, 0.3)', border: '1px solid rgba(212, 175, 55, 0.05)',
+    padding: '10px 12px', borderRadius: '8px',
   },
-  
+  paymentMethod: { fontFamily: "'Manrope', sans-serif", fontSize: '13px', color: '#d0c5af', marginRight: '8px' },
+  paymentAmount: { fontFamily: "'Manrope', sans-serif", fontSize: '14px', color: '#d4af37', fontWeight: '700' },
+  paymentTip: { fontFamily: "'Manrope', sans-serif", fontSize: '11px', color: '#f2ca50', marginLeft: '6px' },
+  deleteBtn: {
+    backgroundColor: 'transparent', border: '1px solid rgba(255, 180, 171, 0.3)', color: '#ffb4ab',
+    borderRadius: '4px', padding: '4px 10px', fontSize: '11px', fontFamily: "'Manrope', sans-serif", fontWeight: '600',
+  },
+
+  inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  label: { fontFamily: "'Manrope', sans-serif", fontSize: '12px', color: '#d0c5af', fontWeight: '500', letterSpacing: '0.1em' },
+  input: {
+    backgroundColor: 'transparent', borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+    borderBottom: '1px solid rgba(229, 226, 225, 0.2)', borderRadius: '0',
+    padding: '12px 0', color: '#e5e2e1', fontSize: '16px', outline: 'none', fontFamily: "'Manrope', sans-serif",
+  },
+
   methodContainer: { display: 'flex', gap: '8px' },
   methodBtn: {
-    flex: 1, padding: '12px 0', borderRadius: '10px',
-    backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-    color: '#8b8b9e', fontSize: '13px', fontWeight: '600', cursor: 'pointer'
+    flex: 1, padding: '12px 0', borderRadius: '4px',
+    backgroundColor: 'rgba(32, 32, 31, 0.5)', border: '1px solid rgba(212, 175, 55, 0.15)',
+    color: '#d0c5af', fontSize: '12px', fontWeight: '600', fontFamily: "'Manrope', sans-serif",
   },
   methodBtnActive: {
-    flex: 1, padding: '12px 0', borderRadius: '10px',
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)', border: 'none',
-    color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer'
+    flex: 1, padding: '12px 0', borderRadius: '4px',
+    backgroundColor: '#d4af37', border: 'none', color: '#3c2f00',
+    fontSize: '12px', fontWeight: '700', fontFamily: "'Manrope', sans-serif",
   },
-  
-  paymentsList: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  listTitle: { fontSize: '12px', color: '#8b8b9e', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', marginTop: '0' },
-  paymentItem: { 
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-    backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
-    padding: '8px 12px', borderRadius: '8px'
-  },
-  paymentMethod: { fontSize: '13px', color: '#8b8b9e', marginRight: '8px' },
-  paymentAmount: { fontSize: '14px', color: '#10b981', fontWeight: '700' },
-  paymentTip: { fontSize: '11px', color: '#f59e0b', marginLeft: '6px' },
-  deleteBtn: { backgroundColor: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', cursor: 'pointer' },
-  
+
   footer: {
-    padding: '20px 24px', borderTop: '1px solid rgba(255,255,255,0.08)',
-    display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.2)'
+    padding: '20px 24px', borderTop: '1px solid rgba(212, 175, 55, 0.1)',
+    backgroundColor: 'rgba(14, 14, 14, 0.5)',
   },
   submitBtn: {
-    background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white',
-    fontWeight: '700', fontSize: '15px', padding: '14px 24px', borderRadius: '12px',
-    border: 'none', width: '100%', cursor: 'pointer'
-  }
+    width: '100%', backgroundColor: '#d4af37', color: '#3c2f00',
+    fontFamily: "'Manrope', sans-serif", fontWeight: '700', fontSize: '14px',
+    padding: '16px', borderRadius: '4px', border: 'none', letterSpacing: '0.05em',
+    boxShadow: '0 10px 20px -10px rgba(212, 175, 55, 0.4)',
+  },
 };

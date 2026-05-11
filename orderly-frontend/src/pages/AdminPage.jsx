@@ -6,16 +6,17 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('categories');
 
   const tabs = [
-    { id: 'categories', label: '📋 Kategoriler' },
-    { id: 'menu',       label: '🍕 Menü Öğeleri' },
-    { id: 'tables',     label: '🪑 Masalar' },
+    { id: 'categories', label: 'Kategoriler' },
+    { id: 'menu',       label: 'Menü Öğeleri' },
+    { id: 'tables',     label: 'Masalar' },
   ];
 
   return (
     <div style={styles.page}>
       <Navbar />
       <div style={styles.content}>
-        <h2 style={styles.title}>⚙️ Yönetim Paneli</h2>
+        <p style={styles.headerLabel}>YÖNETİM</p>
+        <h2 style={styles.title}>Sistem Ayarları</h2>
 
         <div style={styles.tabs}>
           {tabs.map(tab => (
@@ -37,7 +38,6 @@ export default function AdminPage() {
   );
 }
 
-// ─── KATEGORİLER ─────────────────────────────────────────────────
 function CategoriesTab() {
   const [categories, setCategories] = useState([]);
   const [form, setForm]             = useState({ name: '', description: '', displayOrder: '' });
@@ -87,9 +87,9 @@ function CategoriesTab() {
             value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
           <input style={styles.input} placeholder="Sıra numarası" type="number"
             value={form.displayOrder} onChange={e => setForm({...form, displayOrder: e.target.value})} />
-          {error && <p style={styles.error}>⚠️ {error}</p>}
+          {error && <p style={styles.error}>{error}</p>}
           <button type="submit" disabled={loading} style={styles.submitBtn}>
-            {loading ? 'Ekleniyor...' : '+ Kategori Ekle'}
+            {loading ? 'Ekleniyor...' : 'Kategori Ekle'}
           </button>
         </form>
       </div>
@@ -114,7 +114,6 @@ function CategoriesTab() {
   );
 }
 
-// ─── MENÜ ÖĞELERİ ─────────────────────────────────────────────────
 function MenuTab() {
   const [items, setItems]         = useState([]);
   const [categories, setCategories] = useState([]);
@@ -193,9 +192,9 @@ function MenuTab() {
           <input style={styles.input} placeholder="Hazırlık süresi (dakika)" type="number"
             value={form.preparationTimeMinutes}
             onChange={e => setForm({...form, preparationTimeMinutes: e.target.value})} />
-          {error && <p style={styles.error}>⚠️ {error}</p>}
+          {error && <p style={styles.error}>{error}</p>}
           <button type="submit" disabled={loading} style={styles.submitBtn}>
-            {loading ? 'Ekleniyor...' : '+ Menü Öğesi Ekle'}
+            {loading ? 'Ekleniyor...' : 'Menü Öğesi Ekle'}
           </button>
         </form>
       </div>
@@ -203,14 +202,9 @@ function MenuTab() {
       <div style={styles.list}>
         {items.map(item => (
           <div key={item.id} style={styles.listItem}>
-            {/* Resim önizlemesi */}
             <div style={styles.itemImageBox}>
               {item.imageUrl ? (
-                <img
-                  src={item.imageUrl}
-                  alt={item.name}
-                  style={styles.itemImage}
-                />
+                <img src={item.imageUrl} alt={item.name} style={styles.itemImage} />
               ) : (
                 <span style={styles.itemImagePlaceholder}>🍴</span>
               )}
@@ -222,21 +216,14 @@ function MenuTab() {
             </div>
 
             <div style={styles.listActions}>
-              {/* Aktif/Pasif toggle */}
               <button onClick={() => handleToggle(item.id)}
                 style={item.available ? styles.activeBadge : styles.inactiveBadge}>
                 {item.available ? 'Aktif' : 'Pasif'}
               </button>
-
-              {/* Resim Upload */}
               <label style={styles.uploadBtn}>
-                🖼️ Resim
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={(e) => handleImageUpload(item.id, e.target.files[0])}
-                />
+                Resim
+                <input type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={(e) => handleImageUpload(item.id, e.target.files[0])} />
               </label>
             </div>
           </div>
@@ -246,7 +233,6 @@ function MenuTab() {
   );
 }
 
-// ─── MASALAR ───────────────────────────────────────────────────────
 function TablesTab() {
   const [tables, setTables]   = useState([]);
   const [form, setForm]       = useState({ tableNumber: '', capacity: '', location: 'INDOOR' });
@@ -285,16 +271,16 @@ function TablesTab() {
       alert('QR kod indirilemedi');
     }
   };
-  const handleDeleteTable = async (id) => {
-  if (!window.confirm('Masayı silmek istiyor musunuz?')) return;
-  try {
-    await api.delete(`/api/tables/${id}`);
-    fetchTables();
-  } catch (err) {
-    alert(err.response?.data?.message || 'Masa silinemedi!');
-  }
-};
 
+  const handleDeleteTable = async (id) => {
+    if (!window.confirm('Masayı silmek istiyor musunuz?')) return;
+    try {
+      await api.delete(`/api/tables/${id}`);
+      fetchTables();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Masa silinemedi!');
+    }
+  };
 
   return (
     <div style={styles.tabContent}>
@@ -307,12 +293,12 @@ function TablesTab() {
             value={form.capacity} onChange={e => setForm({...form, capacity: e.target.value})} required />
           <select style={styles.input} value={form.location}
             onChange={e => setForm({...form, location: e.target.value})}>
-            <option value="INDOOR">🏠 İç Mekan</option>
-            <option value="OUTDOOR">🌿 Dış Mekan</option>
+            <option value="INDOOR">İç Mekan</option>
+            <option value="OUTDOOR">Dış Mekan</option>
           </select>
-          {error && <p style={styles.error}>⚠️ {error}</p>}
+          {error && <p style={styles.error}>{error}</p>}
           <button type="submit" disabled={loading} style={styles.submitBtn}>
-            {loading ? 'Ekleniyor...' : '+ Masa Ekle'}
+            {loading ? 'Ekleniyor...' : 'Masa Ekle'}
           </button>
         </form>
       </div>
@@ -324,7 +310,7 @@ function TablesTab() {
               <p style={styles.listName}>Masa {table.tableNumber}</p>
               <p style={styles.listSub}>
                 👥 {table.capacity} kişilik •
-                {table.location === 'INDOOR' ? ' 🏠 İç mekan' : ' 🌿 Dış mekan'}
+                {table.location === 'INDOOR' ? ' İç mekan' : ' Dış mekan'}
               </p>
             </div>
             <div style={styles.listActions}>
@@ -336,12 +322,11 @@ function TablesTab() {
                  table.status === 'OCCUPIED'  ? 'Dolu' : 'Rezerve'}
               </span>
               <button onClick={() => downloadQr(table.id, table.tableNumber)} style={styles.qrBtn}>
-                📷 QR İndir
+                QR İndir
               </button>
               <button onClick={() => handleDeleteTable(table.id)} style={styles.deleteBtn}>
                 Sil
               </button>
-
             </div>
           </div>
         ))}
@@ -350,101 +335,112 @@ function TablesTab() {
   );
 }
 
-// ─── STİLLER ───────────────────────────────────────────────────────
 const styles = {
-  page:    { minHeight: '100vh', backgroundColor: '#0a0a0f' },
-  content: { maxWidth: '900px', margin: '0 auto', padding: '32px 24px' },
-  title:   { fontSize: '24px', fontWeight: '700', color: '#f1f1f1', marginBottom: '24px' },
+  page:    { minHeight: '100vh', backgroundColor: '#131313' },
+  content: { maxWidth: '900px', margin: '0 auto', padding: '40px 24px' },
+  headerLabel: {
+    fontFamily: "'Manrope', sans-serif", fontSize: '12px', fontWeight: '500',
+    letterSpacing: '0.1em', color: '#f2ca50', textTransform: 'uppercase', marginBottom: '8px',
+  },
+  title: {
+    fontFamily: "'Playfair Display', serif", fontSize: '36px', fontWeight: '700',
+    color: '#e5e2e1', marginBottom: '32px', lineHeight: '1.2',
+  },
 
   tabs: { display: 'flex', gap: '8px', marginBottom: '32px' },
   tab: {
-    padding: '10px 20px', borderRadius: '10px',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    color: '#8b8b9e', fontSize: '14px', fontWeight: '500',
+    padding: '10px 20px', borderRadius: '4px',
+    backgroundColor: 'transparent', border: '1px solid rgba(153, 144, 124, 0.3)',
+    color: '#d0c5af', fontFamily: "'Manrope', sans-serif", fontSize: '14px', fontWeight: '600',
+    letterSpacing: '0.05em',
   },
   tabActive: {
-    padding: '10px 20px', borderRadius: '10px',
-    background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(239,68,68,0.2))',
-    border: '1px solid rgba(245,158,11,0.3)',
-    color: '#f59e0b', fontSize: '14px', fontWeight: '700',
+    padding: '10px 20px', borderRadius: '4px',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.4)',
+    color: '#f2ca50', fontFamily: "'Manrope', sans-serif", fontSize: '14px', fontWeight: '700',
+    letterSpacing: '0.05em',
   },
 
   tabContent: { display: 'flex', flexDirection: 'column', gap: '24px' },
   formCard: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '16px', padding: '24px',
+    backgroundColor: 'rgba(28, 28, 28, 0.8)', backdropFilter: 'blur(16px)',
+    border: '1px solid rgba(212, 175, 55, 0.15)', borderRadius: '8px', padding: '24px',
   },
-  formTitle: { fontSize: '16px', fontWeight: '700', color: '#f1f1f1', marginBottom: '16px' },
-  form:      { display: 'flex', flexDirection: 'column', gap: '12px' },
+  formTitle: {
+    fontFamily: "'Playfair Display', serif", fontSize: '20px', fontWeight: '600',
+    color: '#e5e2e1', marginBottom: '16px',
+  },
+  form: { display: 'flex', flexDirection: 'column', gap: '12px' },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '10px', padding: '12px 14px',
-    color: '#f1f1f1', fontSize: '14px',
-    outline: 'none', fontFamily: 'Inter, sans-serif',
+    backgroundColor: 'transparent', border: 'none',
+    borderBottom: '1px solid rgba(229, 226, 225, 0.2)', borderRadius: '0',
+    padding: '12px 0', color: '#e5e2e1', fontSize: '14px',
+    outline: 'none', fontFamily: "'Manrope', sans-serif",
   },
   error: {
-    color: '#ef4444', fontSize: '13px',
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    border: '1px solid rgba(239,68,68,0.2)',
-    borderRadius: '8px', padding: '8px 12px',
+    fontFamily: "'Manrope', sans-serif", color: '#ffb4ab', fontSize: '13px',
+    backgroundColor: 'rgba(147, 0, 10, 0.15)', border: '1px solid rgba(147, 0, 10, 0.3)',
+    borderRadius: '4px', padding: '8px 12px',
   },
   submitBtn: {
-    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-    color: 'white', fontWeight: '700', fontSize: '14px',
-    padding: '13px', borderRadius: '10px',
+    backgroundColor: '#d4af37', color: '#3c2f00',
+    fontFamily: "'Manrope', sans-serif", fontWeight: '700', fontSize: '14px',
+    padding: '14px', borderRadius: '4px', letterSpacing: '0.05em', marginTop: '8px',
+    boxShadow: '0 10px 20px -10px rgba(212, 175, 55, 0.4)',
   },
 
   list:     { display: 'flex', flexDirection: 'column', gap: '8px' },
   listItem: {
     display: 'flex', alignItems: 'center', gap: '12px',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '12px', padding: '12px 16px',
+    backgroundColor: 'rgba(28, 28, 28, 0.6)', border: '1px solid rgba(212, 175, 55, 0.08)',
+    borderRadius: '8px', padding: '14px 16px',
   },
-  listName:    { fontSize: '15px', fontWeight: '600', color: '#f1f1f1' },
-  listSub:     { fontSize: '12px', color: '#8b8b9e', marginTop: '3px' },
+  listName: { fontFamily: "'Manrope', sans-serif", fontSize: '15px', fontWeight: '600', color: '#e5e2e1' },
+  listSub:  { fontFamily: "'Manrope', sans-serif", fontSize: '12px', color: '#d0c5af', marginTop: '3px' },
   listActions: { display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' },
 
-  // Menü resim önizleme
   itemImageBox: {
-    width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: '48px', height: '48px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0,
+    backgroundColor: 'rgba(32, 32, 31, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    border: '1px solid rgba(212, 175, 55, 0.1)',
   },
   itemImage:            { width: '100%', height: '100%', objectFit: 'cover' },
   itemImagePlaceholder: { fontSize: '20px', opacity: 0.4 },
 
   activeBadge: {
-    padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
-    backgroundColor: 'rgba(16,185,129,0.1)', color: '#10b981',
-    border: '1px solid rgba(16,185,129,0.2)', cursor: 'pointer',
+    padding: '5px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)', color: '#d4af37',
+    border: '1px solid rgba(212, 175, 55, 0.3)', cursor: 'pointer',
+    fontFamily: "'Manrope', sans-serif", letterSpacing: '0.03em',
   },
   inactiveBadge: {
-    padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
-    backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444',
-    border: '1px solid rgba(239,68,68,0.2)', cursor: 'pointer',
+    padding: '5px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600',
+    backgroundColor: 'rgba(255, 180, 171, 0.1)', color: '#ffb4ab',
+    border: '1px solid rgba(255, 180, 171, 0.2)', cursor: 'pointer',
+    fontFamily: "'Manrope', sans-serif", letterSpacing: '0.03em',
   },
   occupiedBadge: {
-    padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
-    backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444',
-    border: '1px solid rgba(239,68,68,0.2)',
+    padding: '5px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600',
+    backgroundColor: 'rgba(255, 180, 171, 0.1)', color: '#ffb4ab',
+    border: '1px solid rgba(255, 180, 171, 0.2)',
+    fontFamily: "'Manrope', sans-serif", letterSpacing: '0.03em',
   },
   deleteBtn: {
-    padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
-    backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444',
-    border: '1px solid rgba(239,68,68,0.2)',
+    padding: '5px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600',
+    backgroundColor: 'transparent', color: '#ffb4ab',
+    border: '1px solid rgba(255, 180, 171, 0.3)',
+    fontFamily: "'Manrope', sans-serif",
   },
   uploadBtn: {
-    padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
-    backgroundColor: 'rgba(139,92,246,0.1)', color: '#8b5cf6',
-    border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer',
+    padding: '5px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600',
+    backgroundColor: 'rgba(212, 175, 55, 0.05)', color: '#f2ca50',
+    border: '1px solid rgba(212, 175, 55, 0.2)', cursor: 'pointer',
+    fontFamily: "'Manrope', sans-serif",
   },
   qrBtn: {
-    padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
-    backgroundColor: 'rgba(59,130,246,0.1)', color: '#3b82f6',
-    border: '1px solid rgba(59,130,246,0.2)',
+    padding: '5px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600',
+    backgroundColor: 'transparent', color: '#d0c5af',
+    border: '1px solid rgba(153, 144, 124, 0.3)',
+    fontFamily: "'Manrope', sans-serif",
   },
 };
