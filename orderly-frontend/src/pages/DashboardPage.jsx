@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import OrderModal from '../components/OrderModal';
 import api from '../api/axios';
+import OrderModal from '../components/OrderModal';
+import ReservationStartModal from '../components/ReservationStartModal';
 
 const STATUS_CONFIG = {
   AVAILABLE: { label: 'BOŞ',     color: '#f2ca50', borderColor: 'rgba(212, 175, 55, 0.4)', bgStyle: 'gold-border-glow' },
@@ -13,6 +15,7 @@ export default function DashboardPage() {
   const [tables, setTables]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [selectedReservedTable, setSelectedReservedTable] = useState(null);
   const [filter, setFilter] = useState('ALL');
 
   const fetchTables = async () => {
@@ -99,7 +102,13 @@ export default function DashboardPage() {
               return (
                 <div
                   key={table.id}
-                  onClick={() => setSelectedTable(table)}
+                  onClick={() => {
+                    if (table.status === 'RESERVED') {
+                      setSelectedReservedTable(table);
+                    } else {
+                      setSelectedTable(table);
+                    }
+                  }}
                   style={{
                     ...styles.tableCard,
                     border: `1px solid ${status.borderColor}`,
@@ -153,6 +162,20 @@ export default function DashboardPage() {
           table={selectedTable}
           onClose={() => setSelectedTable(null)}
           onSuccess={fetchTables}
+        />
+      )}
+
+      {selectedReservedTable && (
+        <ReservationStartModal
+          table={selectedReservedTable}
+          onClose={() => setSelectedReservedTable(null)}
+          onStartOrder={() => {
+            fetchTables();
+            // Automatically open order modal for the now AVAILABLE table
+            // so OrderModal can create a fresh order (which then makes it OCCUPIED)
+            const updatedTable = { ...selectedReservedTable, status: 'AVAILABLE' };
+            setSelectedTable(updatedTable);
+          }}
         />
       )}
     </div>

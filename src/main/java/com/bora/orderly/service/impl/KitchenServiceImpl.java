@@ -25,7 +25,7 @@ public class KitchenServiceImpl implements IKitchenService {
     @Override
     @Transactional(readOnly = true)
     public List<KitchenOrderResponse> getActiveOrders() {
-        List<OrderStatus> activeStatuses = List.of(OrderStatus.PENDING, OrderStatus.IN_PROGRESS);
+        List<OrderStatus> activeStatuses = List.of(OrderStatus.PENDING, OrderStatus.IN_PROGRESS, OrderStatus.READY);
         return orderRepository.findByStatusIn(activeStatuses)
                 .stream()
                 .map(this::toKitchenResponse)
@@ -53,7 +53,7 @@ public class KitchenServiceImpl implements IKitchenService {
         // Tüm kalemler hazırsa siparişi de READY yap
         Order order = item.getOrder();
         boolean allReady = order.getOrderItems().stream()
-                .allMatch(oi -> oi.getItemStatus() == ItemStatus.READY);
+                .allMatch(oi -> oi.getItemStatus() == ItemStatus.READY || oi.getItemStatus() == ItemStatus.SERVED);
         if (allReady) {
             order.setStatus(OrderStatus.READY);
             orderRepository.save(order);
@@ -68,6 +68,30 @@ public class KitchenServiceImpl implements IKitchenService {
                 .itemStatus(item.getItemStatus())
                 .notes(item.getNotes())
                 .build();
+    }
+    @Override
+    public KitchenOrderResponse completeOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", orderId));
+        
+        order.setStatus(OrderStatus.DELIVERED);
+        // Tüm kalemleri de SERVED yap
+        order.getOrderItems().forEach(item -> item.setItemStatus(ItemStatus.SERVED));
+        
+        orderRepository.save(order);
+        return toKitchenResponse(order);
+    }
+    @Override
+    public KitchenOrderResponse markAllReady(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", orderId));
+        
+        order.setStatus(OrderStatus.READY);
+        // Tüm kalemleri de READY yap
+        order.getOrderItems().forEach(item -> item.setItemStatus(ItemStatus.READY));
+        
+        orderRepository.save(order);
+        return toKitchenResponse(order);
     }
     private KitchenOrderResponse toKitchenResponse(Order order) {
         List<OrderItemResponse> items = order.getOrderItems().stream()

@@ -34,4 +34,14 @@ public interface IKitchenController {
             @ApiResponse(responseCode = "404", description = "Kalem bulunamadı")
     })
     ResponseEntity<OrderItemResponse> markItemReady(@PathVariable Long itemId);
+
+    @Operation(summary = "Siparişi tamamla / Servis edildi",
+            description = "Sipariş READY → DELIVERED olur, ekrandan düşer")
+    @ApiResponse(responseCode = "200", description = "Sipariş teslim edildi")
+    ResponseEntity<KitchenOrderResponse> completeOrder(@PathVariable Long orderId);
+
+    @Operation(summary = "Tüm sipariş kalemlerini hazır işaretle",
+            description = "Siparişteki tüm kalan kalemler tek seferde READY olur, sipariş durumu da READY'ye geçer")
+    @ApiResponse(responseCode = "200", description = "Tüm ürünler hazır yapıldı")
+    ResponseEntity<KitchenOrderResponse> markAllReady(@PathVariable Long orderId);
 }

@@ -41,7 +41,11 @@ public class OrderServiceImpl implements IOrderService {
         //1-Table Check
 
         RestaurantTable restaurantTable = tableRepository.findById(request.getTableId()).orElseThrow(()-> new ResourceNotFoundException("Masa",request.getTableId()));
-        if (restaurantTable.getStatus()== TableStatus.OCCUPIED){
+        
+        List<OrderStatus> activeStatus = List.of(OrderStatus.PENDING, OrderStatus.IN_PROGRESS, OrderStatus.READY, OrderStatus.DELIVERED);
+        boolean hasActiveOrder = orderRepository.findByTableIdAndStatusIn(request.getTableId(), activeStatus).isPresent();
+
+        if (hasActiveOrder) {
             throw new BusinessException("Bu Masada Zaten Aktif Bir Siparis Var");
         }
         //2-Waiter

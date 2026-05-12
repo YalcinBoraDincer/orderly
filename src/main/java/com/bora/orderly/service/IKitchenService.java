@@ -8,4 +8,6 @@ public interface IKitchenService {
     List<KitchenOrderResponse> getActiveOrders();
     KitchenOrderResponse startOrder(Long orderId);
     OrderItemResponse markItemReady(Long itemId);
+    KitchenOrderResponse completeOrder(Long orderId);
+    KitchenOrderResponse markAllReady(Long orderId);
 }

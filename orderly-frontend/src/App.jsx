@@ -6,6 +6,7 @@ import MenuPage       from './pages/MenuPage';
 import KitchenPage    from './pages/KitchenPage';
 import AdminPage      from './pages/AdminPage';
 import FeedbackPage   from './pages/FeedbackPage';
+import ReservationsPage from './pages/ReservationsPage';
 
 function PrivateRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -39,6 +40,12 @@ function App() {
           <Route path="/admin" element={
             <PrivateRoute roles={['ADMIN']}>
               <AdminPage />
+            </PrivateRoute>
+          } />
+
+          <Route path="/reservations" element={
+            <PrivateRoute roles={['ADMIN', 'WAITER']}>
+              <ReservationsPage />
             </PrivateRoute>
           } />
 

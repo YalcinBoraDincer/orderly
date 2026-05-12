@@ -33,4 +33,16 @@ public class KitchenController implements IKitchenController {
     public ResponseEntity<OrderItemResponse> markItemReady(@PathVariable Long itemId) {
         return ResponseEntity.ok(kitchenService.markItemReady(itemId));
     }
+
+    @PatchMapping("/orders/{orderId}/complete")
+    @Override
+    public ResponseEntity<KitchenOrderResponse> completeOrder(@PathVariable Long orderId) {
+        return ResponseEntity.ok(kitchenService.completeOrder(orderId));
+    }
+
+    @PatchMapping("/orders/{orderId}/ready-all")
+    @Override
+    public ResponseEntity<KitchenOrderResponse> markAllReady(@PathVariable Long orderId) {
+        return ResponseEntity.ok(kitchenService.markAllReady(orderId));
+    }
 }

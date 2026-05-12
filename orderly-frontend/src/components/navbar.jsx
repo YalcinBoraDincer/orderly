@@ -17,9 +17,10 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { path: '/dashboard', label: 'Masalar', roles: ['ADMIN', 'WAITER', 'KITCHEN'] },
-    { path: '/kitchen',   label: 'Mutfak',  roles: ['ADMIN', 'KITCHEN'] },
-    { path: '/admin',     label: 'Yönetim', roles: ['ADMIN'] },
+    { path: '/dashboard',   label: 'Masalar',        roles: ['ADMIN', 'WAITER', 'KITCHEN'] },
+    { path: '/reservations',label: 'Rezervasyonlar', roles: ['ADMIN', 'WAITER'] },
+    { path: '/kitchen',     label: 'Mutfak',         roles: ['ADMIN', 'KITCHEN'] },
+    { path: '/admin',       label: 'Yönetim',        roles: ['ADMIN'] },
   ];
 
   return (

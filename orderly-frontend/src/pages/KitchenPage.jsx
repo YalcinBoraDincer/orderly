@@ -48,6 +48,24 @@ export default function KitchenPage() {
     }
   };
 
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      await api.patch(`/api/kitchen/orders/${orderId}/complete`);
+      fetchOrders();
+    } catch (e) {
+      alert('Sipariş teslim edilemedi!');
+    }
+  };
+
+  const handleAllReady = async (orderId) => {
+    try {
+      await api.patch(`/api/kitchen/orders/${orderId}/ready-all`);
+      fetchOrders();
+    } catch (e) {
+      alert('Toplu güncelleme başarısız oldu!');
+    }
+  };
+
   // ✅ Düzeltildi: orderStatus kullanıyoruz
   const pendingOrders    = orders.filter(o => o.orderStatus === 'PENDING');
   const inProgressOrders = orders.filter(o => o.orderStatus === 'IN_PROGRESS');
@@ -118,12 +136,15 @@ export default function KitchenPage() {
           )}
           {isPreparing && (
             <button
-              onClick={() => order.items?.forEach(i => {
-                if (i.itemStatus === 'PREPARING') handleItemReady(i.id);
-              })}
+              onClick={() => handleAllReady(order.orderId)}
               style={styles.btnPrimary}
             >
               TÜMÜ HAZIR
+            </button>
+          )}
+          {isReady && (
+            <button onClick={() => handleCompleteOrder(order.orderId)} style={styles.btnPrimary}>
+              TESLİM EDİLDİ / KALDIR
             </button>
           )}
         </div>
