@@ -1,214 +1,134 @@
-# 🍽️ Orderly — Restaurant Order Management System
+# Orderly — Premium Restaurant Management Ecosystem
 
-> A production-ready REST API for restaurant management, built with Spring Boot 4, PostgreSQL, and Docker.
-
----
-
-## 🚀 Tech Stack
-
-![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
-![Swagger](https://img.shields.io/badge/Docs-Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
+A fully-integrated, full-stack restaurant operations platform engineered for high-performance service orchestration. Built with a scalable Java/Spring Boot ecosystem and a modern React-based administrative interface with premium glassmorphic aesthetics.
 
 ---
 
-## ✨ Features
+## 🛠️ Technology Stack
 
-- 🔐 **JWT Authentication** with refresh token rotation (access: 24h, refresh: 7 days)
-- 👥 **Role-based access control** — ADMIN, WAITER, KITCHEN
-- 📋 **Menu & Category management** with soft delete and availability toggle
-- 🪑 **Table management** with QR code generation (ZXing)
-- 📦 **Full order lifecycle** — `PENDING → IN_PROGRESS → READY → DELIVERED → CLOSED`
-- 👨‍🍳 **Kitchen display API** — real-time order queue for kitchen staff
-- 🐳 **Dockerized** — single command startup with Docker Compose
-- 📖 **Swagger UI** — fully documented API with OpenAPI 3
-- ⚡ **Global exception handling** — consistent JSON error responses
+### 🔙 Backend Engineering
+![Java 21](https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot 4.0](https://img.shields.io/badge/Spring%20Boot-4.0-6DB33F?style=flat-square&logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring_Security-6.x-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)
+![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+
+### 🎨 Frontend & UI
+![React 19](https://img.shields.io/badge/React-19.x-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?style=flat-square&logo=vite&logoColor=white)
+![Vanilla CSS](https://img.shields.io/badge/CSS-Midnight%20%26%20Gold-1572B6?style=flat-square&logo=css3&logoColor=white)
+![Axios](https://img.shields.io/badge/Axios-HTTP-5A29E4?style=flat-square&logo=axios&logoColor=white)
+
+### ⚙️ DevOps & Documentation
+![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=flat-square&logo=docker&logoColor=white)
+![OpenAPI 3](https://img.shields.io/badge/Swagger-API%20Docs-85EA2D?style=flat-square&logo=swagger&logoColor=black)
+![Maven](https://img.shields.io/badge/Build-Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white)
 
 ---
 
-## 🏃 Quick Start
+## 💎 Core Features
 
-### With Docker (Recommended)
+- **🔐 Enterprise-Grade Security:** State-of-the-art stateless JWT authentication implementing secure refresh token rotation and fine-grained role-based access control (ADMIN, WAITER, KITCHEN).
+- **🎭 'Midnight & Gold' Dashboard:** Real-time interactive venue map providing instantaneous visualization of dynamic table states (Available, Occupied, Reserved) with high-contrast UX.
+- **📅 Integrated Reservation Engine:** Dynamic scheduling module with auto-table-blocking logic. Intelligently transitions physical assets from RESERVED to OCCUPIED upon client arrival.
+- **🍳 Live KDS (Kitchen Display System):** Multi-stage queue pipeline (`PENDING → PREPARING → READY`) engineered with atomic transactional state updates to ensure absolute process reliability.
+- **📦 Order Lifecycle Governance:** Granular item-level control mechanism, robust conflict resolution algorithms preventing state overrides, and streamlined checkout throughput.
+- **📱 Contactless Assets:** Automated digital interaction points enabled by server-side high-fidelity QR code emission leveraging the ZXing engine.
+
+---
+
+## ⚡ Deployment Guide
+
+### 🐳 Containerized Deployment (Highly Recommended)
+
+The fastest way to provision both the service ecosystem and interactive frontplane along with robust database persistence.
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/orderly-api.git
-cd orderly-api
-docker-compose up
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/orderly.git
+cd orderly
+
+# Trigger multi-stage deterministic build pipelines and daemonize
+docker-compose up --build -d
 ```
 
-That's it. No Java, no PostgreSQL installation needed.
+Once deployment completes successfully, access metrics are provisioned as follows:
 
-| Service | URL |
-|---------|-----|
-| API | http://localhost:8080 |
-| Swagger UI | http://localhost:8080/swagger-ui.html |
+| Component | Network Location | Interface |
+| :--- | :--- | :--- |
+| **Frontend Client** | [http://localhost:5173](http://localhost:5173) | Web Application |
+| **Central API** | [http://localhost:8080](http://localhost:8080) | Core Service |
+| **API Schema** | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) | OpenApi UI |
 
-### Without Docker
+---
 
-```bash
-# PostgreSQL must be running locally
-# Update application.properties with your DB credentials
-./mvnw spring-boot:run
+## 📐 Domain Architecture
+
+### 📊 Entity Relationship Matrix
+
+```mermaid
+erDiagram
+    USER ||--o{ ORDER : takes
+    USER ||--o{ REFRESH_TOKEN : owns
+    TABLE ||--o{ ORDER : hosts
+    TABLE ||--o{ RESERVATION : scheduled_at
+    CATEGORY ||--o{ MENU_ITEM : classifies
+    ORDER ||--|{ ORDER_ITEM : contains
+    MENU_ITEM ||--o{ ORDER_ITEM : instantiates
+    ORDER ||--o{ PAYMENT : settled_by
+```
+
+### 🏗️ Component Stratification (Backend)
+
+```text
+com.bora.orderly
+├── 🚪 config/         # Security, CORS, JWT Strategies
+├── 📡 controller/     # Exposed REST Boundaries (Contracts & Implementation)
+├── 💼 service/        # Orchestration Layer & Transaction Boundaries
+├── 💾 repository/     # Spring Data Data-Access Gateways
+├── 📦 entity/         # Persistence Identity Models (JPA Hibernate)
+├── 📨 dto/            # Ingress Validation (Requests) & Egress Contracts (Responses)
+├── 🛠️ exception/      # Standardized Global Error Propagation Handling
+└── 📑 enums/          # Rigid State Matrices (Order, Table, Item Statuses)
 ```
 
 ---
 
-## 📡 API Endpoints
+## 🚦 Pipeline Workflows
 
-### 🔑 Authentication
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/auth/register` | ❌ | Register new user |
-| POST | `/api/auth/login` | ❌ | Login & get tokens |
-| POST | `/api/auth/refresh` | ❌ | Refresh access token |
-| POST | `/api/auth/logout` | ✅ | Revoke all refresh tokens |
-
-### 📋 Categories
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/categories` | ❌ | List all active categories |
-| GET | `/api/categories/{id}` | ❌ | Get category by ID |
-| POST | `/api/categories` | ADMIN | Create category |
-| PUT | `/api/categories/{id}` | ADMIN | Update category |
-| DELETE | `/api/categories/{id}` | ADMIN | Soft delete category |
-
-### 🍕 Menu Items
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/menu` | ❌ | List available items |
-| GET | `/api/menu/{id}` | ❌ | Get item by ID |
-| GET | `/api/menu/category/{id}` | ❌ | Filter by category |
-| POST | `/api/menu` | ADMIN | Create menu item |
-| PUT | `/api/menu/{id}` | ADMIN | Update menu item |
-| PATCH | `/api/menu/{id}/availability` | ADMIN | Toggle availability |
-
-### 🪑 Tables
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/tables` | ✅ | List all tables with status |
-| GET | `/api/tables/{id}` | ✅ | Get table by ID |
-| GET | `/api/tables/{id}/qr` | ✅ | Download QR code (PNG) |
-| POST | `/api/tables` | ADMIN | Create table |
-| PATCH | `/api/tables/{id}/status` | ✅ | Update table status |
-
-### 📦 Orders
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/orders` | ✅ | Create new order |
-| GET | `/api/orders/{id}` | ✅ | Get order details |
-| GET | `/api/orders/table/{id}/active` | ✅ | Get active order for table |
-| PATCH | `/api/orders/{id}/status` | ✅ | Update order status |
-| POST | `/api/orders/{id}/items` | ✅ | Add items to order |
-
-### 👨‍🍳 Kitchen
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/kitchen/orders` | KITCHEN | List active orders |
-| PATCH | `/api/kitchen/orders/{id}/start` | KITCHEN | Start preparing order |
-| PATCH | `/api/kitchen/items/{id}/ready` | KITCHEN | Mark item as ready |
-
----
-
-## 🗄️ Database Schema
-
-```
-users ──────────────────────── orders
-                                  │
-categories ──── menu_items ───────┤
-                                  │
-restaurant_tables ────────────────┤
-                                  │
-                             order_items
-                                  │
-                             menu_items
-
-refresh_tokens ──── users
-```
-
-**Tables:** `users`, `categories`, `menu_items`, `restaurant_tables`, `orders`, `order_items`, `refresh_tokens`
-
----
-
-## 🏗️ Architecture
-
-```
-controller/
-├── interface (Swagger docs)
-└── impl (HTTP mapping)
-
-service/
-├── interface (contract)
-└── impl (business logic)
-
-repository/       ← Spring Data JPA
-entity/           ← JPA models
-dto/
-├── request/      ← input validation
-└── response/     ← API output
-enums/            ← UserRole, OrderStatus, TableStatus, ItemStatus
-exception/        ← Global error handling
-config/           ← Security, JWT, QR Code
-```
-
----
-
-## 🔄 Order Flow
-
-```
-Create Order ──→ PENDING ──→ IN_PROGRESS ──→ READY ──→ DELIVERED ──→ CLOSED
+### 🛒 Order Progression Pipeline
+```text
+NEW ORDER ─► [PENDING] ─► [IN_PROGRESS] ─► [READY] ─► [DELIVERED] ─► [CLOSED/PAID]
                                 │                                      │
                                 └──────────────────────────────────────┘
                                               CANCELLED
 ```
+*Table lifecycle hooks trigger automated atomic releases back to availability queues upon termination conditions (`CLOSED`, `CANCELLED`).*
 
-When order is **CLOSED** or **CANCELLED** → Table status automatically becomes **AVAILABLE** ✅
-
----
-
-## 🐳 Docker
-
-```bash
-# Start everything
-docker-compose up
-
-# Start in background
-docker-compose up -d
-
-# Rebuild after code changes
-docker-compose up --build
-
-# Stop
-docker-compose down
-
-# Stop and remove volumes (fresh start)
-docker-compose down -v
+### 📅 Reservation State Propagation
+```text
+DRAFT ─► [PENDING] ─► [CONFIRMED] ──┐ 
+                              (Same-Day Event Triggers)
+                                    ▼
+                        TABLE STATE ◄═► [RESERVED] ─► [COMPLETED] ─► [AVAILABLE]
 ```
 
 ---
 
-## 📝 Environment Variables
+## 🛡️ Environment Configuration Matrix
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/postgres` | Database URL |
-| `DB_USERNAME` | `postgres` | DB username |
-| `DB_PASSWORD` | `1` | DB password |
-| `DB_SCHEMA` | `orderly` | PostgreSQL schema |
-| `JWT_SECRET` | `...` | JWT signing secret (min 32 chars) |
-| `JWT_EXPIRATION` | `86400000` | Access token TTL (ms) |
-| `JWT_REFRESH_EXPIRATION` | `604800000` | Refresh token TTL (ms) |
+Key variables configured in `docker-compose.yml` / `.env` to drive microservice behavior.
 
----
-
-## 👤 Author
-
-**Bora** — [GitHub](https://github.com/YOUR_USERNAME)
+| Matrix Key | Baseline Config | Specification |
+| :--- | :--- | :--- |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://db:5432/orderlydb` | RDBMS connection URI |
+| `JWT_SECRET` | `[SHA-256 SALT HASH]` | Cryptographic token signature seed |
+| `JWT_EXPIRATION_MS` | `86400000` | Primary credential validity period |
+| `VITE_API_URL` | `http://localhost:8080` | Cross-Origin reference link |
 
 ---
 
-## 📄 License
+## 🖋️ Ownership & Licensing
 
-This project is open source and available under the [MIT License](LICENSE).
+**Authored by:** Bora ([GitHub Profile](https://github.com/YOUR_USERNAME))  
+**License Scope:** Open Distributed and transparent under the provisions of the [MIT License](LICENSE).
