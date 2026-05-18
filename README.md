@@ -47,11 +47,7 @@ A full-stack restaurant management system built with Spring Boot and React. Cove
 Starts the backend, frontend, and database with a single command. No local Java or PostgreSQL required.
 
 ```bash
-<<<<<<< HEAD
-git clone https://github.com/YOUR_USERNAME/orderly.git
-=======
 git clone https://github.com/YalcinBoraDincer/orderly.git
->>>>>>> 9bef9ad1074d319d4fb0fc76c548b939621b8758
 cd orderly
 docker-compose up --build -d
 ```
@@ -162,6 +158,6 @@ Full interactive documentation is available at `/swagger-ui/index.html` when the
 
 ## Author
 
-**Bora** — [github.com/YOUR_USERNAME](https://github.com/YOUR_USERNAME)
+**Bora** — [github.com/YalcinBoraDincer](https://github.com/YalcinBoraDincer)
 
 MIT License
